@@ -1041,11 +1041,11 @@ String __fastcall TForm1::regSettingDescription(const int addr, const uint8_t va
 			break;
 
 		case SI5351_REG_PLL_INPUT_SOURCE:
-			s  = " ClkIn_Div-" + IntToStr((value >> 6) & 0x03);
+			s  = " CLKIN_DIV-" + IntToStr((value >> 6) & 0x03);
 			s += (value & 0x20) ? "  RES-5"          : "  res-5";
 			s += (value & 0x10) ? "  RES-4"          : "  res-4";
-			s += (value & 0x08) ? "  PLLB_Src-CLKIN" : "  PLLB_Src-XTAL";
-			s += (value & 0x04) ? "  PLLA_Src-CLKIN" : "  PLLA_Src-XTAL";
+			s += (value & 0x08) ? "  PLLB_SRC-CLKIN" : "  PLLB_SRC-XTAL";
+			s += (value & 0x04) ? "  PLLA_SRC-CLKIN" : "  PLLA_SRC-XTAL";
 			s += (value & 0x02) ? "  RES-1"          : "  res-1";
 			s += (value & 0x01) ? "  RES-0"          : "  res-0";
 			break;
@@ -1738,44 +1738,46 @@ void __fastcall TForm1::updateFrequencies()
 	double clk_1_Hz = 0.0;
 	double clk_2_Hz = 0.0;
 
+	const uint8_t  clkin_div            = (m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03;
+
 	// extract pll data
-	const bool     pll_a_src        = (m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] & 0x40) ? true : false;
-	const bool     pll_b_src        = (m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] & 0x80) ? true : false;
-	const bool     pll_a_reset      = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x20) ? true : false;
-	const bool     pll_b_reset      = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x80) ? true : false;
-	const int      pll_ref_div      = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
-	const uint32_t pll_ref_Hz       = m_xtal_Hz / pll_ref_div;
+	const bool     pll_a_src            = (m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] & 0x40) ? true : false;
+	const bool     pll_b_src            = (m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] & 0x80) ? true : false;
+	const bool     pll_a_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x20) ? true : false;
+	const bool     pll_b_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x80) ? true : false;
+	const int      pll_ref_div          = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
+	const uint32_t pll_ref_Hz           = m_xtal_Hz / pll_ref_div;
 
 	// extract clk-0 data
-	const int  clk0_src             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 2) & 0x03;
-	const bool clk0_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x40) ? true : false;
-	const bool clk0_pll             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x20) ? true : false;
-	const bool clk0_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x80) ? true : false;
-	const int  clk0_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 0) & 0x03;
-	const int  clk0_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 0) & 0x03;
-	const bool clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
+	const int      clk0_src             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 2) & 0x03;
+	const bool     clk0_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x40) ? true : false;
+	const bool     clk0_pll             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x20) ? true : false;
+	const bool     clk0_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x80) ? true : false;
+	const int      clk0_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 0) & 0x03;
+	const int      clk0_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 0) & 0x03;
+	const bool     clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
 
 	// extract clk-1 data
-	const int  clk1_src             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 2) & 0x03;
-	const bool clk1_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x40) ? true : false;
-	const bool clk1_pll             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x20) ? true : false;
-	const bool clk1_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x80) ? true : false;
-	const int  clk1_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 2) & 0x03;
-	const int  clk1_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 0) & 0x03;
-	const bool clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
+	const int      clk1_src             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 2) & 0x03;
+	const bool     clk1_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x40) ? true : false;
+	const bool     clk1_pll             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x20) ? true : false;
+	const bool     clk1_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x80) ? true : false;
+	const int      clk1_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 2) & 0x03;
+	const int      clk1_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 0) & 0x03;
+	const bool     clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
 
 	// extract clk-2 data
-	const int  clk2_src             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 2) & 0x03;
-	const bool clk2_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x40) ? true : false;
-	const bool clk2_pll             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x20) ? true : false;
-	const bool clk2_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x80) ? true : false;
-	const int  clk2_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 4) & 0x03;
-	const int  clk2_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 0) & 0x03;
-	const bool clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
+	const int      clk2_src             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 2) & 0x03;
+	const bool     clk2_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x40) ? true : false;
+	const bool     clk2_pll             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x20) ? true : false;
+	const bool     clk2_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x80) ? true : false;
+	const int      clk2_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 4) & 0x03;
+	const int      clk2_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 0) & 0x03;
+	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
 	// extract spread spectrum data
-	const bool ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
-	const bool ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
+	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
+	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
 
 	// ******************************
 	// calculate PLL-A frequency
@@ -1788,7 +1790,12 @@ void __fastcall TForm1::updateFrequencies()
 	p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
 
 	if (p3 > 0)
+	{
 		pll_a_Hz = (double)pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+
+		if (pll_a_src)		// CLKIN as PLL ref
+			pll_a_Hz /= 1u << clkin_div;
+	}
 
 	if (pll_a_Hz > 0.0)
 	{
@@ -1860,7 +1867,12 @@ void __fastcall TForm1::updateFrequencies()
 	p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
 
 	if (p3 > 0)
+	{
 		pll_b_Hz = (double)pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+
+		if (pll_b_src)		// CLKIN as PLL ref
+			pll_b_Hz /= 1u << clkin_div;
+	}
 
 	if (pll_b_Hz > 0.0)
 	{
