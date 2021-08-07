@@ -24,5 +24,5 @@ someone else's unit (such as laser range measuring units).
 ## Stuff
 
 <div align="center">
-<img src="/image1.png">
+<img src="/Image1.png">
 </div>
