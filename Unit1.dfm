@@ -92,12 +92,12 @@ object Form1: TForm1
     Caption = 'MHz '
   end
   object Label5: TLabel
-    Left = 8
+    Left = 15
     Top = 42
-    Width = 135
+    Width = 128
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Xtal / Reference Frequency '
+    Caption = 'XTAL / CLK-IN Frequency '
   end
   object Label6: TLabel
     Left = 311

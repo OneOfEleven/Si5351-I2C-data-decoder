@@ -85,7 +85,7 @@ private:	// User declarations
 
 	int m_file_line_clicked;
 
-	uint32_t m_xtal_Hz;
+	double m_xtal_Hz;
 
 	uint8_t m_si5351_reg_values[256];
 

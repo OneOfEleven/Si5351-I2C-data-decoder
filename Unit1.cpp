@@ -389,13 +389,11 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 
 	m_ini_filename = ChangeFileExt(Application->ExeName, ".ini");
 
-//	Memo1->Clear();
-
 	FilenameEdit->Text = "";
 
 	m_file_line_clicked = -1;
 
-	m_xtal_Hz = 27000000;
+	m_xtal_Hz          = 27000000.0;
 	XtalFreqEdit->Text = "27.000000";
 
 	PLLALabel->Caption = "--";
@@ -409,6 +407,7 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 
 	OpenDialog1->InitialDir = IncludeTrailingPathDelimiter(ExtractFilePath(Application->ExeName));
 
+	// finish the rest of the initialization after we are showing on-screen
 	::PostMessage(this->Handle, WM_INIT_GUI, 0, 0);
 }
 
@@ -1746,7 +1745,7 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     pll_a_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x20) ? true : false;
 	const bool     pll_b_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x80) ? true : false;
 	const int      pll_ref_div          = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
-	const uint32_t pll_ref_Hz           = m_xtal_Hz / pll_ref_div;
+	const double   pll_ref_Hz           = m_xtal_Hz / pll_ref_div;
 
 	// extract clk-0 data
 	const int      clk0_src             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 2) & 0x03;
@@ -1791,7 +1790,7 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (p3 > 0)
 	{
-		pll_a_Hz = (double)pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+		pll_a_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
 
 		if (pll_a_src)		// CLKIN as PLL ref
 			pll_a_Hz /= 1u << clkin_div;
@@ -1868,7 +1867,7 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (p3 > 0)
 	{
-		pll_b_Hz = (double)pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+		pll_b_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
 
 		if (pll_b_src)		// CLKIN as PLL ref
 			pll_b_Hz /= 1u << clkin_div;
@@ -1948,12 +1947,12 @@ void __fastcall TForm1::updateFrequencies()
 					s2.printf(" %0.4f kHz", clk_0_Hz / 1e3);
 				s += s2;
 				s += clk0_int_mode ? " INT" : " FRAC";
-				s += clk0_pll ? " SRC-PLL-B" : " SRC-PLL-A";
+				s += clk0_pll ? " PLL-B" : " PLL-A";
 			}
 			break;
 	}
 
-	s += clk0_powered_down ? " Powered Down" : " Powered Up";
+	s += clk0_powered_down ? " PWR-DN" : " PWR-UP";
 
 	if (clk0_enabled)
 	{
@@ -1965,7 +1964,7 @@ void __fastcall TForm1::updateFrequencies()
 		{
 			case 0: s += " LOW"; break;
 			case 1: s += " HIGH"; break;
-			case 2: s += " FLOAT"; break;
+			case 2: s += " HIGH-Z"; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
@@ -2024,12 +2023,12 @@ void __fastcall TForm1::updateFrequencies()
 					s2.printf(" %0.4f kHz", clk_1_Hz / 1e3);
 				s += s2;
 				s += clk1_int_mode ? " INT" : " FRAC";
-				s += clk1_pll ? " SRC-PLL-B" : " SRC-PLL-A";
+				s += clk1_pll ? " PLL-B" : " PLL-A";
 			}
 			break;
 	}
 
-	s += clk1_powered_down ? " Powered Down" : " Powered Up";
+	s += clk1_powered_down ? " PWR-DN" : " PWR-UP";
 
 	if (clk1_enabled)
 	{
@@ -2041,7 +2040,7 @@ void __fastcall TForm1::updateFrequencies()
 		{
 			case 0: s += " LOW"; break;
 			case 1: s += " HIGH"; break;
-			case 2: s += " FLOAT"; break;
+			case 2: s += " HIGH-Z"; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
@@ -2100,12 +2099,12 @@ void __fastcall TForm1::updateFrequencies()
 					s2.printf(" %0.4f kHz", clk_2_Hz / 1e3);
 				s += s2;
 				s += clk2_int_mode ? " INT" : " FRAC";
-				s += clk2_pll ? " SRC-PLL-B" : " SRC-PLL-A";
+				s += clk2_pll ? " PLL-B" : " PLL-A";
 			}
 			break;
 	}
 
-	s += clk2_powered_down ? " Powered Down" : " Powered Up";
+	s += clk2_powered_down ? " PWR-DN" : " PWR-UP";
 
 	if (clk2_enabled)
 	{
@@ -2117,7 +2116,7 @@ void __fastcall TForm1::updateFrequencies()
 		{
 			case 0: s += " LOW"; break;
 			case 1: s += " HIGH"; break;
-			case 2: s += " FLOAT"; break;
+			case 2: s += " HIGH-Z"; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
@@ -2298,9 +2297,27 @@ void __fastcall TForm1::XtalFreqEditChange(TObject *Sender)
 		return;
 
 	if (freq < 0.0)
-		return;
+		freq = 0.0;
 
-	m_xtal_Hz = (uint32_t)floor((freq * 1000000) + 0.5);
+	m_xtal_Hz = freq * 1e6;
+
+	if (!m_filename.IsEmpty())
+	{	// update the display
+		if (!FileListView->Selected)
+		{
+			updateRegisterListView(false);
+		}
+		else
+		{
+			m_file_line_clicked = FileListView->Selected->Index;
+
+			LineLabel->Caption = IntToStr(1 + m_file_line_clicked);
+			LineLabel->Update();
+
+//			updateRegisterListView(false);
+			updateRegisterListView(true);
+		}
+	}
 }
 
 void __fastcall TForm1::RegisterListViewResize(TObject *Sender)
