@@ -829,6 +829,9 @@ void MainWindow::on_RefHzLineEdit_textChanged(const QString &arg1)
 
 void MainWindow::onTableWidgetCellSelected(int nRow, int nCol)
 {
+    Q_UNUSED(nRow);
+    Q_UNUSED(nCol);
+
 //    QMessageBox::information(this, "", "Cell at row " + QString::number(nRow) + " column " + QString::number(nCol) + " was double clicked.");
 }
 
@@ -1658,6 +1661,7 @@ void __fastcall MainWindow::updateFrequencies()
     const bool     clk0_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x80) ? true : false;
     const int      clk0_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 0) & 0x03;
     const int      clk0_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 0) & 0x03;
+    const bool     clk0_inv             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x10) ? true : false;
     const bool     clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
 
     // extract clk-1 data
@@ -1667,6 +1671,7 @@ void __fastcall MainWindow::updateFrequencies()
     const bool     clk1_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x80) ? true : false;
     const int      clk1_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 2) & 0x03;
     const int      clk1_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 0) & 0x03;
+    const bool     clk1_inv             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x10) ? true : false;
     const bool     clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
 
     // extract clk-2 data
@@ -1676,11 +1681,12 @@ void __fastcall MainWindow::updateFrequencies()
     const bool     clk2_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x80) ? true : false;
     const int      clk2_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 4) & 0x03;
     const int      clk2_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 0) & 0x03;
+    const bool     clk2_inv             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x10) ? true : false;
     const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
     // extract spread spectrum data
-    const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
-    const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
+//    const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
+//    const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
 
     // ******************************
     // calculate PLL-A frequency
@@ -1725,10 +1731,10 @@ void __fastcall MainWindow::updateFrequencies()
     // ******************************
     // spread spectrum
     // this affects PLL-A (not PLL-B)
-
+/*
     if (ss_enabled)
     {
-        reg = &m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0];
+      reg = &m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0];
         const uint16_t ssdn_p1 = ((uint16_t)(reg[ 5] & 0x0f) << 8) | reg[ 4];
         const uint16_t ssdn_p2 = ((uint16_t)(reg[ 0] & 0x7f) << 8) | reg[ 1];
         const uint16_t ssdn_p3 = ((uint16_t)(reg[ 2] & 0x7f) << 8) | reg[ 3];
@@ -1757,8 +1763,8 @@ void __fastcall MainWindow::updateFrequencies()
 
             }
         }
-    }
-
+  }
+*/
     // ******************************
     // calculate PLL-B frequency
 
@@ -1872,6 +1878,9 @@ void __fastcall MainWindow::updateFrequencies()
         }
     }
 
+    if (clk0_inv)
+        s += " INV";
+
     switch (clk0_drive_current)
     {
         case 0: s += " 2mA"; break;
@@ -1947,6 +1956,9 @@ void __fastcall MainWindow::updateFrequencies()
             case 3: s += " ENABLED"; break;
         }
     }
+
+    if (clk1_inv)
+        s += " INV";
 
     switch (clk1_drive_current)
     {
@@ -2024,6 +2036,9 @@ void __fastcall MainWindow::updateFrequencies()
         }
     }
 
+    if (clk2_inv)
+        s += " INV";
+
     switch (clk2_drive_current)
     {
         case 0: s += " 2mA"; break;
@@ -2091,19 +2106,20 @@ void __fastcall MainWindow::updateRegisterListView(const bool show_updated)
 
             const uint8_t value = m_si5351_reg_values[addr];
 
+            const bool updated = (updated_regs[addr] && show_updated) ? true : false;
+
             s1.sprintf("%02X", value);
             s1 += "  " + QString("%1").arg(value, 8, 2, QChar('0'));
+            if (updated)
+                s1 = "* " + s1;  // highlight the updated registers
 
             s2 = regSettingDescription(addr, value);
-
-            if (updated_regs[addr] && show_updated)
-                s1 = "* " + s1;
 
             ui->RegisterTableWidget->item(k, 2)->setText(s1);
             ui->RegisterTableWidget->item(k, 3)->setText(s2);
 
-            if (show_updated && updated_regs[addr])
-                ui->RegisterTableWidget->selectRow(k);
+            if (updated)
+                ui->RegisterTableWidget->selectRow(k);  // highlight the updated registers
         }
     }
 
@@ -2116,6 +2132,8 @@ void __fastcall MainWindow::updateRegisterListView(const bool show_updated)
 
 void MainWindow::on_splitter_splitterMoved(int pos, int index)
 {
+    Q_UNUSED(pos);
+    Q_UNUSED(index);
+
     sizeRegisterColoumns();
 }
-
