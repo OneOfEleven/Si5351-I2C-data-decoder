@@ -1754,6 +1754,7 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk0_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x80) ? true : false;
 	const int      clk0_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 0) & 0x03;
 	const int      clk0_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 0) & 0x03;
+	const bool     clk0_inv             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x10) ? true : false;
 	const bool     clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
 
 	// extract clk-1 data
@@ -1763,6 +1764,7 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk1_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x80) ? true : false;
 	const int      clk1_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 2) & 0x03;
 	const int      clk1_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 0) & 0x03;
+	const bool     clk1_inv             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x10) ? true : false;
 	const bool     clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
 
 	// extract clk-2 data
@@ -1772,6 +1774,7 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk2_powered_down    = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x80) ? true : false;
 	const int      clk2_dis_output_mode = (m_si5351_reg_values[SI5351_REG_CLK3_0_DISABLE_STATE] >> 4) & 0x03;
 	const int      clk2_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 0) & 0x03;
+	const bool     clk2_inv             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x10) ? true : false;
 	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
 	// extract spread spectrum data
@@ -1969,6 +1972,9 @@ void __fastcall TForm1::updateFrequencies()
 		}
 	}
 
+	if (clk0_inv)
+		s += " INV";
+
 	switch (clk0_drive_current)
 	{
 		case 0: s += " 2mA"; break;
@@ -2045,6 +2051,9 @@ void __fastcall TForm1::updateFrequencies()
 		}
 	}
 
+	if (clk1_inv)
+		s += " INV";
+
 	switch (clk1_drive_current)
 	{
 		case 0: s += " 2mA"; break;
@@ -2120,6 +2129,9 @@ void __fastcall TForm1::updateFrequencies()
 			case 3: s += " ENABLED"; break;
 		}
 	}
+
+	if (clk2_inv)
+		s += " INV";
 
 	switch (clk2_drive_current)
 	{
