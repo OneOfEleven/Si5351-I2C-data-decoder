@@ -1,3 +1,9 @@
+
+// Si5351 I2C data decoder
+//
+// Written by Cathy G6AMU
+// August 2021
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
