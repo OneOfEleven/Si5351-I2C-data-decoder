@@ -1,4 +1,11 @@
 
+// Si5351 I2C data decoder
+//
+// This was written and compiled using the old Borland Builder C++ v6 dev system (because its easy and quick to use)
+//
+// Written by Cathy G6AMU
+// August 2021
+
 #ifndef Unit1H
 #define Unit1H
 
@@ -76,7 +83,7 @@ private:	// User declarations
 	String m_ini_filename;
 
 	bool m_closing;
-	
+
 	String                                m_filename;
 	std::vector < std::vector <String> >  m_parsed_file_lines;
 	std::vector < std::vector <uint8_t> > m_file_line_reg_values;
@@ -110,7 +117,7 @@ private:	// User declarations
 	void __fastcall updateRegisterListView(const bool show_updated);
 
 	void __fastcall selectFile();
-	
+
 protected:
 
 	#pragma option push -vi-
