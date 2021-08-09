@@ -2,7 +2,7 @@
 // Si5351 I2C data decoder
 //
 // This was written and compiled using the old Borland Builder C++ v6 dev system (because its easy and quick to use)
-// 
+//
 // Written by Cathy G6AMU
 // August 2021
 
@@ -756,7 +756,6 @@ int __fastcall TForm1::parseString(String s, String separator, std::vector <Stri
 bool __fastcall TForm1::loadFile(String filename)
 {
 	std::vector <uint8_t> m_file_data;
-	std::vector <String>  m_file_lines;
 
 	// ***************************
 	// load the file in
@@ -780,14 +779,12 @@ bool __fastcall TForm1::loadFile(String filename)
 	if (fseek(file, 0, SEEK_END) != 0)
 	{
 		fclose(file);
-		file = NULL;
 		return false;
 	}
 	const size_t file_size = (int)ftell(file);
 	if (fseek(file, 0, SEEK_SET) != 0 || file_size < 10)
 	{
 		fclose(file);
-		file = NULL;
 		return false;
 	}
 
@@ -796,7 +793,6 @@ bool __fastcall TForm1::loadFile(String filename)
 	if (fread(&m_file_data[0], 1, file_size, file) != file_size)
 	{
 		fclose(file);
-//		file = NULL;
 		return false;
 	}
 
@@ -850,21 +846,14 @@ bool __fastcall TForm1::loadFile(String filename)
 //		if (line.IsEmpty())
 //			continue;
 
-		m_file_lines.push_back(line);
-	}
-
-	if (m_file_lines.empty())
-		return false;
-
-	// ***************************
-	// parse up each text line of the file
-
-	for (unsigned int i = 0; i < m_file_lines.size(); i++)
-	{
+		// parse the text line up
 		std::vector <String> params;
-		parseString(m_file_lines[i], " ", params);
+		parseString(line, " ", params);
 		m_parsed_file_lines.push_back(params);
 	}
+
+	if (m_parsed_file_lines.empty())
+		return false;
 
 	// ***************************
 	// convert the text values into data values
@@ -1790,8 +1779,8 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
 	// extract spread spectrum data
-	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
-	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
+//	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
+//	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
 
 	// ******************************
 	// calculate PLL-A frequency
@@ -1836,7 +1825,7 @@ void __fastcall TForm1::updateFrequencies()
 	// ******************************
 	// spread spectrum
 	// this affects PLL-A (not PLL-B)
-
+/*
 	if (ss_enabled)
 	{
 		reg = &m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0];
@@ -1869,7 +1858,7 @@ void __fastcall TForm1::updateFrequencies()
 			}
 		}
 	}
-
+*/
 	// ******************************
 	// calculate PLL-B frequency
 
