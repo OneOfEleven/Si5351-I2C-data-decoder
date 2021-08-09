@@ -21,6 +21,10 @@ see what the exact PLL frequencies and CLK output states/frequencies
 are with each step - wonderful for debugging code or reverse engineering
 someone else's unit (such as laser range measuring units).
 
+## Compiling
+
+Now have a Borland C++ Builder v6 version and a Qt version.
+
 ## Stuff
 
 <div align="center">
