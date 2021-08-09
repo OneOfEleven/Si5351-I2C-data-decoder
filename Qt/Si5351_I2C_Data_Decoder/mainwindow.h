@@ -8,6 +8,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMutex>
 
 #include <vector>
 #include <stdint.h>
@@ -18,71 +19,73 @@ QT_END_NAMESPACE
 
 struct TVersion
 {
-    uint16_t MajorVer;
-    uint16_t MinorVer;
-    uint16_t ReleaseVer;
-    uint16_t BuildVer;
-    TVersion() : MajorVer(0), MinorVer(0), ReleaseVer(0), BuildVer(0) {}
+	uint16_t MajorVer;
+	uint16_t MinorVer;
+	uint16_t ReleaseVer;
+	uint16_t BuildVer;
+	TVersion() : MajorVer(0), MinorVer(0), ReleaseVer(0), BuildVer(0) {}
 };
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+	MainWindow(QWidget *parent = nullptr);
+	~MainWindow();
 
 private slots:
-    void on_FileOpenPushButton_clicked();
+	void on_FileOpenPushButton_clicked();
 
-    void on_RefHzLineEdit_textChanged(const QString &arg1);
+	void on_RefHzLineEdit_textChanged(const QString &arg1);
 
-    void on_FileListView_clicked(const QModelIndex &index);
+	void on_FileListView_clicked(const QModelIndex &index);
 
-    void onTableWidgetCellSelected(int nRow, int nCol);
+	void onTableWidgetCellSelected(int nRow, int nCol);
 
-    void onSelectionChanged();
+	void onSelectionChanged();
 
-    void on_splitter_splitterMoved(int pos, int index);
+	void on_splitter_splitterMoved(int pos, int index);
 
 protected:
-    void showEvent(QShowEvent *event);
-    void resizeEvent(QResizeEvent *event);
+	void showEvent(QShowEvent *event);
+	void resizeEvent(QResizeEvent *event);
 
 private:
-    Ui::MainWindow *ui;
+	Ui::MainWindow *ui;
 
-    bool m_shown;
+	bool m_shown;
 
-    QString m_ini_filename;
+	QString m_ini_filename;
 
-    QString                               m_filename;
-    std::vector < std::vector <QString> > m_parsed_file_lines;
-    std::vector < std::vector <uint8_t> > m_file_line_reg_values;
+	QString                               m_filename;
+	std::vector < std::vector <QString> > m_parsed_file_lines;
+	std::vector < std::vector <uint8_t> > m_file_line_reg_values;
 
-    int m_file_line_clicked;
+	int m_file_line_clicked;
 
-    double m_xtal_Hz;
+	double m_xtal_Hz;
 
-    uint8_t m_si5351_reg_values[256];
+	uint8_t m_si5351_reg_values[256];
 
-    void __fastcall sizeRegisterColoumns();
+	QMutex m_file_mutex;
 
-    void __fastcall selectFile();
+	void __fastcall sizeRegisterColoumns();
 
-    void __fastcall loadSettings();
-    void __fastcall saveSettings();
+	void __fastcall selectFile();
 
-    bool __fastcall loadFile(QString filename);
+	void __fastcall loadSettings();
+	void __fastcall saveSettings();
 
-    void __fastcall resetSi5351RegValues();
+	bool __fastcall loadFile(QString filename);
 
-    QString __fastcall regSettingDescription(const int addr, const uint8_t value);
+	void __fastcall resetSi5351RegValues();
 
-    void __fastcall updateFrequencies();
+	QString __fastcall regSettingDescription(const int addr, const uint8_t value);
 
-    void __fastcall updateRegisterListView(const bool show_updated);
+	void __fastcall updateFrequencies();
+
+	void __fastcall updateRegisterListView(const bool show_updated);
 };
 
 #endif
