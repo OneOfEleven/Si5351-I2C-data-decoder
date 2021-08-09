@@ -605,6 +605,8 @@ void __fastcall MainWindow::saveSettings()
 
 bool __fastcall MainWindow::loadFile(QString filename)
 {
+    std::vector <uint8_t> m_file_data;
+
     // ***************************
     // load the file in
 
@@ -631,7 +633,6 @@ bool __fastcall MainWindow::loadFile(QString filename)
 
     QTextStream stream(&file);
 
-    m_file_lines.resize(0);
     m_parsed_file_lines.resize(0);
 
     while (!stream.atEnd())
@@ -654,8 +655,6 @@ bool __fastcall MainWindow::loadFile(QString filename)
 
         if (line.isEmpty())
             continue;                                           		// the line is blank
-
-        m_file_lines.push_back(line);
 
         QStringList params = line.split(" ");   // parse the line up
         if (params.count() <= 0)
@@ -681,9 +680,9 @@ bool __fastcall MainWindow::loadFile(QString filename)
     ui->LineLabel->update();
 
     m_file_line_reg_values.clear();
-    m_file_line_reg_values.resize(m_file_lines.size());
+    m_file_line_reg_values.resize(m_parsed_file_lines.size());
 
-    for (unsigned int i = 0; i < m_file_lines.size(); i++)
+    for (unsigned int i = 0; i < m_parsed_file_lines.size(); i++)
     {
         std::vector <QString> &params = m_parsed_file_lines[i];
 
@@ -755,7 +754,7 @@ bool __fastcall MainWindow::loadFile(QString filename)
         ui->FileListView->setUpdatesEnabled(false);
 
         QStringList List;
-        for (unsigned int i = 0; i < m_file_lines.size(); i++)
+        for (unsigned int i = 0; i < m_parsed_file_lines.size(); i++)
         {
             std::vector <QString> &params = m_parsed_file_lines[i];
             QString s;
@@ -785,11 +784,11 @@ bool __fastcall MainWindow::loadFile(QString filename)
 
     // ***************************
 
-    m_filename = !m_file_lines.empty() ? filename : "";
+    m_filename = !m_parsed_file_lines.empty() ? filename : "";
 
-    ui->FilenameLabel->setText(filename);
+    ui->FilenameLabel->setText(m_filename);
 
-    return !m_file_lines.empty();
+    return !m_parsed_file_lines.empty();
 }
 
 void MainWindow::on_FileOpenPushButton_clicked()

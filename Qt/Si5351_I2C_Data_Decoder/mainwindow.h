@@ -52,8 +52,6 @@ private:
     QString m_ini_filename;
 
     QString                               m_filename;
-    std::vector <uint8_t>                 m_file_data;
-    std::vector <QString>                 m_file_lines;
     std::vector < std::vector <QString> > m_parsed_file_lines;
     std::vector < std::vector <uint8_t> > m_file_line_reg_values;
 

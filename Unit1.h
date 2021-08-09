@@ -15,13 +15,13 @@
 #include <ValEdit.hpp>
 #include <ComCtrls.hpp>
 #include <ExtCtrls.hpp>
-#include <vector>
-
 #include <Classes.hpp>
 #include <Controls.hpp>
 #include <StdCtrls.hpp>
 #include <Forms.hpp>
 #include <Dialogs.hpp>
+
+#include <vector>
 
 #define WM_INIT_GUI        (WM_USER + 100)
 #define WM_UPDATE_STATUS   (WM_USER + 101)
@@ -78,8 +78,6 @@ private:	// User declarations
 	bool m_closing;
 	
 	String                                m_filename;
-	std::vector <uint8_t>                 m_file_data;
-	std::vector <String>                  m_file_lines;
 	std::vector < std::vector <String> >  m_parsed_file_lines;
 	std::vector < std::vector <uint8_t> > m_file_line_reg_values;
 

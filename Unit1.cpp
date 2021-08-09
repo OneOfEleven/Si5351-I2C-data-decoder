@@ -755,6 +755,9 @@ int __fastcall TForm1::parseString(String s, String separator, std::vector <Stri
 
 bool __fastcall TForm1::loadFile(String filename)
 {
+	std::vector <uint8_t> m_file_data;
+	std::vector <String>  m_file_lines;
+
 	// ***************************
 	// load the file in
 
@@ -794,7 +797,6 @@ bool __fastcall TForm1::loadFile(String filename)
 	{
 		fclose(file);
 //		file = NULL;
-		m_file_data.resize(0);
 		return false;
 	}
 
@@ -805,12 +807,11 @@ bool __fastcall TForm1::loadFile(String filename)
 	// ***************************
 	// extract each text line
 
-	m_file_lines.resize(0);
 	m_parsed_file_lines.resize(0);
 
 	for (unsigned int i = 0; i < m_file_data.size(); )
 	{
-		String s;
+		String line;
 
 		// find the end of the line
 		while (i < m_file_data.size())
@@ -832,22 +833,28 @@ bool __fastcall TForm1::loadFile(String filename)
 				c = ' ';
 
 			if (c >= 32)
-				s += c;
+				line += c;
 		}
 
-		s = s.Trim();
-//		if (s.IsEmpty())
+		// convert double spaces to single spaces
+		while (!line.IsEmpty())
+		{
+			const int p = line.Pos("  ");
+			if (p < 1)
+				break;
+			line = line.Delete(p, 1).Trim();
+		}
+
+		line = line.Trim();
+
+//		if (line.IsEmpty())
 //			continue;
 
-		m_file_lines.push_back(s);
+		m_file_lines.push_back(line);
 	}
 
 	if (m_file_lines.empty())
 		return false;
-
-	m_filename = filename;
-
-	FilenameEdit->Text = m_filename;
 
 	// ***************************
 	// parse up each text line of the file
@@ -870,9 +877,9 @@ bool __fastcall TForm1::loadFile(String filename)
 	LineLabel->Update();
 
 	m_file_line_reg_values.clear();
-	m_file_line_reg_values.resize(m_file_lines.size());
+	m_file_line_reg_values.resize(m_parsed_file_lines.size());
 
-	for (unsigned int i = 0; i < m_file_lines.size(); i++)
+	for (unsigned int i = 0; i < m_parsed_file_lines.size(); i++)
 	{
 		std::vector <String> &params = m_parsed_file_lines[i];
 
@@ -949,22 +956,27 @@ bool __fastcall TForm1::loadFile(String filename)
 	{
 		FileListView->Items->BeginUpdate();
 		FileListView->Clear();
-		for (unsigned int i = 0; i < m_file_lines.size(); i++)
+		for (unsigned int i = 0; i < m_parsed_file_lines.size(); i++)
 		{
+			String line;
 			std::vector <String> &params = m_parsed_file_lines[i];
-			String s;
+
 			for (unsigned int k = 0; k < params.size(); k++)
-				s += " " + params[k];
+				line += " " + params[k];
 
 			TListItem *item = FileListView->Items->Add();
-			item->Caption = s;
+			item->Caption = line;
 		}
 		FileListView->Items->EndUpdate();
 	}
 
 	// ***************************
 
-	return !m_file_lines.empty();
+	m_filename = !m_parsed_file_lines.empty() ? filename : String("");
+
+	FilenameEdit->Text = m_filename;
+
+	return !m_parsed_file_lines.empty();
 }
 
 String __fastcall TForm1::binToStr(const uint64_t value, const int digits)
