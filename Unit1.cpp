@@ -165,7 +165,7 @@ typedef enum
 	SI5351_REG_PLL_RESET                         = 177,
 	SI5351_REG_CRYSTAL_INTERNAL_LOAD_CAPACITANCE = 183,
 	SI5351_REG_FANOUT                            = 187
-} t_si5351_register;
+} t_si5351_register;
 
 const t_si5351_reg_list si5351_reg_list[] =
 {
@@ -694,6 +694,7 @@ void __fastcall TForm1::loadSettings()
 
 void __fastcall TForm1::saveSettings()
 {
+	// make sure any left over settings from previous versions are deleted
 	DeleteFile(m_ini_filename);
 
 	TIniFile *ini = new TIniFile(m_ini_filename);
@@ -843,8 +844,8 @@ bool __fastcall TForm1::loadFile(String filename)
 
 		line = line.Trim();
 
-//		if (line.IsEmpty())
-//			continue;
+		if (line.IsEmpty())
+			continue;
 
 		// parse the text line up
 		std::vector <String> params;
@@ -877,7 +878,7 @@ bool __fastcall TForm1::loadFile(String filename)
 
 		String s = params[0];
 
-		if (s.Pos('.') > 0)
+		if (s.Length() > 1 && s.Pos('.') > 0)
 		{
 			float seconds;
 			if (TryStrToFloat(s, seconds))
