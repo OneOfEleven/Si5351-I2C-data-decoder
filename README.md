@@ -17,7 +17,7 @@ file - remove all the text on each line before the 1st Si5351 byte
 
 Then just load that text file into this software. You can then single
 step through the captured data (select any line in the left list) to
-see what the exact PLL frequency is and CLK output states/frequencies
+see what the exact PLL frequencies and CLK output states/frequencies
 are with each step - wonderful for debugging code or reverse engineering
 someone else's unit (such as laser range measuring units).
 
