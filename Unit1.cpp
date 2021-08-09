@@ -1801,23 +1801,21 @@ void __fastcall TForm1::updateFrequencies()
 			pll_a_Hz /= 1u << clkin_div;
 	}
 
+	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
+
+	s += (m_si5351_reg_values[SI5351_REG_CLK6_CONTROL] & 0x40) ? " INT " : " FRAC";
+
 	if (pll_a_Hz > 0.0)
 	{
+		String s2;
 		if (pll_a_Hz >= 1e6)
-			s.printf(" %0.7f MHz", pll_a_Hz / 1e6);
+			s2.printf(" %0.7f MHz", pll_a_Hz / 1e6);
 		else
-			s.printf(" %0.4f kHz", pll_a_Hz / 1e3);
-
-		s += (m_si5351_reg_values[SI5351_REG_CLK6_CONTROL] & 0x40) ? " INT" : " FRAC";
-
-		s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
+			s2.printf(" %0.4f kHz", pll_a_Hz / 1e3);
+		s += s2;
 
 		if (pll_a_reset)
 			s += " RST";
-	}
-	else
-	{
-		s = "---";
 	}
 
 	PLLALabel->Caption = s;
@@ -1878,23 +1876,21 @@ void __fastcall TForm1::updateFrequencies()
 			pll_b_Hz /= 1u << clkin_div;
 	}
 
+	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
+
+	s += (m_si5351_reg_values[SI5351_REG_CLK7_CONTROL] & 0x40) ? " INT " : " FRAC";
+
 	if (pll_b_Hz > 0.0)
 	{
+		String s2;
 		if (pll_b_Hz >= 1e6)
-			s.printf(" %0.7f MHz", pll_b_Hz / 1e6);
+			s2.printf(" %0.7f MHz", pll_b_Hz / 1e6);
 		else
-			s.printf(" %0.4f kHz", pll_b_Hz / 1e3);
-
-		s += (m_si5351_reg_values[SI5351_REG_CLK7_CONTROL] & 0x40) ? " INT" : " FRAC";
-
-		s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
+			s2.printf(" %0.4f kHz", pll_b_Hz / 1e3);
+		s += s2;
 
 		if (pll_b_reset)
 			s += " RST";
-	}
-	else
-	{
-		s = "---";
 	}
 
 	PLLBLabel->Caption = s;
@@ -1921,43 +1917,42 @@ void __fastcall TForm1::updateFrequencies()
 	r_div    = (reg[2] >> 4) & 0x07;
 	div_by_4 = (reg[2] >> 2) & 0x03;
 
-	if (!clk0_powered_down && (p3 > 0 || div_by_4 == 0x03))
+	if (!clk0_powered_down && clk0_enabled)
 	{
-		const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
-//		clk_0_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-		clk_0_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+		switch (clk0_src)
+		{
+			case 0:
+				clk_0_Hz = m_xtal_Hz;
+				break;
+			case 1:
+				clk_0_Hz = m_xtal_Hz;
+				break;
+			case 2:
+			case 3:
+				if (p3 > 0 || div_by_4 == 0x03)
+				{
+					const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
+					//clk_0_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+					clk_0_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+				}
+				break;
+		}
 		clk_0_Hz /= 1u << r_div;
 	}
 
 	// multisync6-7: fOUT = fIN / P1
 
+	s += clk0_powered_down ? " PWR-DN" : " PWR-UP";
+
 	switch (clk0_src)
 	{
-		case 0:
-			s += " SRC-XTAL";
-			break;
-		case 1:
-			s += " SRC-CLKIN";
-			break;
-		case 2:
-			s += " SRC-???";
-			break;
-		case 3:
-			if (clk_0_Hz > 0.0)
-			{
-				String s2;
-				if (clk_0_Hz >= 1e6)
-					s2.printf(" %0.7f MHz", clk_0_Hz / 1e6);
-				else
-					s2.printf(" %0.4f kHz", clk_0_Hz / 1e3);
-				s += s2;
-				s += clk0_int_mode ? " INT" : " FRAC";
-				s += clk0_pll ? " PLL-B" : " PLL-A";
-			}
-			break;
+		case 0: s += " SRC-XTAL "; break;
+		case 1: s += " SRC-CLKIN"; break;
+		case 2: s += " SRC-???  "; break;
+		case 3: s += " SRC-MS0  "; break;
 	}
 
-	s += clk0_powered_down ? " PWR-DN" : " PWR-UP";
+	s += clk0_pll ? " PLL-B" : " PLL-A";
 
 	if (clk0_enabled)
 	{
@@ -1967,15 +1962,12 @@ void __fastcall TForm1::updateFrequencies()
 	{
 		switch (clk0_dis_output_mode)
 		{
-			case 0: s += " LOW"; break;
-			case 1: s += " HIGH"; break;
-			case 2: s += " HIGH-Z"; break;
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
-
-	if (clk0_inv)
-		s += " INV";
 
 	switch (clk0_drive_current)
 	{
@@ -1984,6 +1976,21 @@ void __fastcall TForm1::updateFrequencies()
 		case 2: s += " 6mA"; break;
 		case 3: s += " 8mA"; break;
 	}
+
+	s += clk0_int_mode ? " INT " : " FRAC";
+
+	if (clk_0_Hz > 0.0)
+	{
+		String s2;
+		if (clk_0_Hz >= 1e6)
+			s2.sprintf(" %0.7f MHz", clk_0_Hz / 1e6);
+		else
+			s2.sprintf(" %0.4f kHz", clk_0_Hz / 1e3);
+		s += s2;
+	}
+
+	if (clk0_inv)
+		s += " INV";
 
 	Clock0Label->Caption = s;
 	Clock0Label->Update();
@@ -2000,43 +2007,42 @@ void __fastcall TForm1::updateFrequencies()
 	r_div    = (reg[2] >> 4) & 0x07;
 	div_by_4 = (reg[2] >> 2) & 0x03;
 
-	if (!clk1_powered_down && (p3 > 0 || div_by_4 == 0x03))
+	if (!clk1_powered_down && clk1_enabled)
 	{
-		const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
-//		clk_1_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-		clk_1_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+		switch (clk1_src)
+		{
+			case 0:
+				clk_1_Hz = m_xtal_Hz;
+				break;
+			case 1:
+				clk_1_Hz = m_xtal_Hz;
+				break;
+			case 2:
+			case 3:
+				if (p3 > 0 || div_by_4 == 0x03)
+				{
+					const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
+					//clk_1_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+					clk_1_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+				}
+				break;
+		}
 		clk_1_Hz /= 1u << r_div;
 	}
 
 	// multisync6-7: fOUT = fIN / P1
 
+	s += clk1_powered_down ? " PWR-DN" : " PWR-UP";
+
 	switch (clk1_src)
 	{
-		case 0:
-			s += " SRC-XTAL";
-			break;
-		case 1:
-			s += " SRC-CLKIN";
-			break;
-		case 2:
-			s += " SRC-???";
-			break;
-		case 3:
-			if (clk_1_Hz > 0.0)
-			{
-				String s2;
-				if (clk_1_Hz >= 1e6)
-					s2.printf(" %0.7f MHz", clk_1_Hz / 1e6);
-				else
-					s2.printf(" %0.4f kHz", clk_1_Hz / 1e3);
-				s += s2;
-				s += clk1_int_mode ? " INT" : " FRAC";
-				s += clk1_pll ? " PLL-B" : " PLL-A";
-			}
-			break;
+		case 0: s += " SRC-XTAL "; break;
+		case 1: s += " SRC-CLKIN"; break;
+		case 2: s += " SRC-MS0  "; break;
+		case 3: s += " SRC-MS1  "; break;
 	}
 
-	s += clk1_powered_down ? " PWR-DN" : " PWR-UP";
+	s += clk1_pll ? " PLL-B" : " PLL-A";
 
 	if (clk1_enabled)
 	{
@@ -2046,15 +2052,12 @@ void __fastcall TForm1::updateFrequencies()
 	{
 		switch (clk1_dis_output_mode)
 		{
-			case 0: s += " LOW"; break;
-			case 1: s += " HIGH"; break;
-			case 2: s += " HIGH-Z"; break;
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
-
-	if (clk1_inv)
-		s += " INV";
 
 	switch (clk1_drive_current)
 	{
@@ -2063,6 +2066,22 @@ void __fastcall TForm1::updateFrequencies()
 		case 2: s += " 6mA"; break;
 		case 3: s += " 8mA"; break;
 	}
+
+	s += clk1_int_mode ? " INT " : " FRAC";
+
+	if (clk_1_Hz > 0.0)
+	{
+		String s2;
+		if (clk_1_Hz >= 1e6)
+			s2.sprintf(" %0.7f MHz", clk_1_Hz / 1e6);
+		else
+			s2.sprintf(" %0.4f kHz", clk_1_Hz / 1e3);
+		s += s2;
+	}
+
+	if (clk1_inv)
+		s += " INV";
+
 
 	Clock1Label->Caption = s;
 	Clock1Label->Update();
@@ -2079,43 +2098,42 @@ void __fastcall TForm1::updateFrequencies()
 	r_div    = (reg[2] >> 4) & 0x07;
 	div_by_4 = (reg[2] >> 2) & 0x03;
 
-	if (!clk2_powered_down && (p3 > 0 || div_by_4 == 0x03))
+	if (!clk2_powered_down && clk2_enabled)
 	{
-		const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
-//		clk_2_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-		clk_2_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+		switch (clk2_src)
+		{
+			case 0:
+				clk_2_Hz = m_xtal_Hz;
+				break;
+			case 1:
+				clk_2_Hz = m_xtal_Hz;
+				break;
+			case 2:
+			case 3:
+				if (p3 > 0 || div_by_4 == 0x03)
+				{
+					const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
+					//clk_2_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+					clk_2_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
+				}
+				break;
+		}
 		clk_2_Hz /= 1u << r_div;
 	}
 
 	// multisync6-7: fOUT = fIN / P1
 
+	s += clk2_powered_down ? " PWR-DN" : " PWR-UP";
+
 	switch (clk2_src)
 	{
-		case 0:
-			s += " SRC-XTAL";
-			break;
-		case 1:
-			s += " SRC-CLKIN";
-			break;
-		case 2:
-			s += " SRC-???";
-			break;
-		case 3:
-			if (clk_2_Hz > 0.0)
-			{
-				String s2;
-				if (clk_2_Hz >= 1e6)
-					s2.printf(" %0.7f MHz", clk_2_Hz / 1e6);
-				else
-					s2.printf(" %0.4f kHz", clk_2_Hz / 1e3);
-				s += s2;
-				s += clk2_int_mode ? " INT" : " FRAC";
-				s += clk2_pll ? " PLL-B" : " PLL-A";
-			}
-			break;
+		case 0: s += " SRC-XTAL "; break;
+		case 1: s += " SRC-CLKIN"; break;
+		case 2: s += " SRC-MS0  "; break;
+		case 3: s += " SRC-MS2  "; break;
 	}
 
-	s += clk2_powered_down ? " PWR-DN" : " PWR-UP";
+	s += clk2_pll ? " PLL-B" : " PLL-A";
 
 	if (clk2_enabled)
 	{
@@ -2125,15 +2143,12 @@ void __fastcall TForm1::updateFrequencies()
 	{
 		switch (clk2_dis_output_mode)
 		{
-			case 0: s += " LOW"; break;
-			case 1: s += " HIGH"; break;
-			case 2: s += " HIGH-Z"; break;
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
 			case 3: s += " ENABLED"; break;
 		}
 	}
-
-	if (clk2_inv)
-		s += " INV";
 
 	switch (clk2_drive_current)
 	{
@@ -2142,6 +2157,21 @@ void __fastcall TForm1::updateFrequencies()
 		case 2: s += " 6mA"; break;
 		case 3: s += " 8mA"; break;
 	}
+
+	s += clk2_int_mode ? " INT " : " FRAC";
+
+	if (clk_2_Hz > 0.0)
+	{
+		String s2;
+		if (clk_2_Hz >= 1e6)
+			s2.sprintf(" %0.7f MHz", clk_2_Hz / 1e6);
+		else
+			s2.sprintf(" %0.4f kHz", clk_2_Hz / 1e3);
+		s += s2;
+	}
+
+	if (clk2_inv)
+		s += " INV";
 
 	Clock2Label->Caption = s;
 	Clock2Label->Update();

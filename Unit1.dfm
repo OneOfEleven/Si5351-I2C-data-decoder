@@ -48,39 +48,39 @@ object Form1: TForm1
   object Clock2Label: TLabel
     Left = 643
     Top = 92
-    Width = 71
-    Height = 13
+    Width = 77
+    Height = 14
     Caption = 'Clock2Label'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Consolas'
     Font.Style = [fsBold]
     ParentFont = False
   end
   object Clock0Label: TLabel
     Left = 643
     Top = 44
-    Width = 71
-    Height = 13
+    Width = 77
+    Height = 14
     Caption = 'Clock0Label'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Consolas'
     Font.Style = [fsBold]
     ParentFont = False
   end
   object Clock1Label: TLabel
     Left = 643
     Top = 68
-    Width = 71
-    Height = 13
+    Width = 77
+    Height = 14
     Caption = 'Clock1Label'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Consolas'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -118,26 +118,26 @@ object Form1: TForm1
   object PLLALabel: TLabel
     Left = 351
     Top = 44
-    Width = 62
-    Height = 13
+    Width = 63
+    Height = 14
     Caption = 'PLLALabel'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Consolas'
     Font.Style = [fsBold]
     ParentFont = False
   end
   object PLLBLabel: TLabel
     Left = 351
     Top = 68
-    Width = 62
-    Height = 13
+    Width = 63
+    Height = 14
     Caption = 'PLLBLabel'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clNavy
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Consolas'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -177,7 +177,7 @@ object Form1: TForm1
     Top = 40
     Width = 77
     Height = 21
-    TabOrder = 1
+    TabOrder = 2
     Text = 'XtalFreqEdit'
     OnChange = XtalFreqEditChange
   end
@@ -197,7 +197,7 @@ object Form1: TForm1
     ParentColor = True
     ParentFont = False
     ReadOnly = True
-    TabOrder = 2
+    TabOrder = 1
     Text = 'FilenameEdit'
     OnClick = FilenameEditClick
   end
@@ -233,7 +233,7 @@ object Form1: TForm1
       Constraints.MinWidth = 100
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -11
       Font.Name = 'Consolas'
       Font.Style = []
       GridLines = True
@@ -283,7 +283,7 @@ object Form1: TForm1
       Constraints.MinWidth = 100
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -11
       Font.Name = 'Consolas'
       Font.Style = []
       GridLines = True
