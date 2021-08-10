@@ -1606,14 +1606,14 @@ String __fastcall TForm1::regSettingDescription(const int addr, const uint8_t va
 
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0:
 			s  = (value & 0x80) ? " SSC_EN"   : " ssc_en";
-			s += "  SSDN_P2[14:8]-" + IntToStr((uint32_t)((value >> 4) & 0x7f) << 8);
+			s += "  SSDN_P2[14:8]-" + IntToStr((uint32_t)(value & 0x7f) << 8);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_1:
 			s = " SSDN_P2[ 7:0]-" + IntToStr(value);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2:
 			s  = (value & 0x80) ? " SSC_MODE-CENTER"   : " ssc_mode-DOWN";
-			s += "  SSDN_P3[14:8]-" + IntToStr((uint32_t)((value >> 4) & 0x7f) << 8);
+			s += "  SSDN_P3[14:8]-" + IntToStr((uint32_t)(value & 0x7f) << 8);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_3:
 			s = " SSDN_P3[ 7:0]-" + IntToStr(value);
@@ -1629,13 +1629,13 @@ String __fastcall TForm1::regSettingDescription(const int addr, const uint8_t va
 			s  = " SSUDP[ 7:0]-" + IntToStr(value);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_7:
-			s  = " SSUP_P2[14:8]-" + IntToStr((uint32_t)((value >> 4) & 0x7f) << 8);
+			s  = " SSUP_P2[14:8]-" + IntToStr((uint32_t)(value & 0x7f) << 8);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_8:
 			s  = " SSUP_P2[ 7:0]-" + IntToStr(value);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_9:
-			s  = " SSUP_P3[14:8]-" + IntToStr((uint32_t)((value >> 4) & 0x7f) << 8);
+			s  = " SSUP_P3[14:8]-" + IntToStr((uint32_t)(value & 0x7f) << 8);
 			break;
 		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_10:
 			s  = " SSUP_P3[ 7:0]-" + IntToStr(value);
@@ -1747,7 +1747,7 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     pll_a_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x20) ? true : false;
 	const bool     pll_b_reset          = (m_si5351_reg_values[SI5351_REG_PLL_RESET] & 0x80) ? true : false;
 	const int      pll_ref_div          = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
-	const double   pll_ref_Hz           = m_xtal_Hz / pll_ref_div;
+	const double   pll_ref_Hz           = m_xtal_Hz;
 
 	// extract clk-0 data
 	const int      clk0_src             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 2) & 0x03;
@@ -1780,8 +1780,8 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
 	// extract spread spectrum data
-//	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
-//	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
+	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
+	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
 
 	// ******************************
 	// calculate PLL-A frequency
@@ -1795,10 +1795,8 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (p3 > 0)
 	{
+		const double pll_ref_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
 		pll_a_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
-
-		if (pll_a_src)		// CLKIN as PLL ref
-			pll_a_Hz /= 1u << clkin_div;
 	}
 
 	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
@@ -1824,7 +1822,7 @@ void __fastcall TForm1::updateFrequencies()
 	// ******************************
 	// spread spectrum
 	// this affects PLL-A (not PLL-B)
-/*
+
 	if (ss_enabled)
 	{
 		reg = &m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0];
@@ -1839,6 +1837,9 @@ void __fastcall TForm1::updateFrequencies()
 
 		if (ssudp > 0)
 		{
+			const double pfd_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
+			const double pll_div = (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);	// a + (b / c)
+
 			if (ss_center)
 			{	// center spread
 				// +-0.1% to +-1.5 in steps of 0.1%
@@ -1854,10 +1855,14 @@ void __fastcall TForm1::updateFrequencies()
 
 				// TODO:
 
+//				double ssdn = (double)ssdn_p2 / ssdn_p3;
+//				ssdn += ssdn_p1;
+
+//				const double ssc_amp = ssdn;
 			}
 		}
 	}
-*/
+
 	// ******************************
 	// calculate PLL-B frequency
 
@@ -1870,10 +1875,8 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (p3 > 0)
 	{
+		const double pll_ref_Hz = (pll_b_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
 		pll_b_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
-
-		if (pll_b_src)		// CLKIN as PLL ref
-			pll_b_Hz /= 1u << clkin_div;
 	}
 
 	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
