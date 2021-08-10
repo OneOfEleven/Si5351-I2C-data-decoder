@@ -1957,21 +1957,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk0_pll ? " PLL-B" : " PLL-A";
 
-	if (clk0_enabled)
-	{
-		s += " ENABLED";
-	}
-	else
-	{
-		switch (clk0_dis_output_mode)
-		{
-			case 0: s += " LOW    "; break;
-			case 1: s += " HIGH   "; break;
-			case 2: s += " HIGH-Z "; break;
-			case 3: s += " ENABLED"; break;
-		}
-	}
-
 	switch (clk0_drive_current)
 	{
 		case 0: s += " 2mA"; break;
@@ -1982,7 +1967,22 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk0_int_mode ? " INT " : " FRAC";
 
-	if (clk_0_Hz > 0.0)
+	if (clk0_enabled)
+	{
+//		s += " ENABLED";
+	}
+	else
+	{
+		switch (clk0_dis_output_mode)
+		{
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
+//			case 3: s += " ENABLED"; break;
+		}
+	}
+
+	if (clk_0_Hz > 0.0 && (clk0_enabled || clk0_dis_output_mode == 3))
 	{
 		String s2;
 		if (clk_0_Hz >= 1e6)
@@ -2047,21 +2047,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk1_pll ? " PLL-B" : " PLL-A";
 
-	if (clk1_enabled)
-	{
-		s += " ENABLED";
-	}
-	else
-	{
-		switch (clk1_dis_output_mode)
-		{
-			case 0: s += " LOW    "; break;
-			case 1: s += " HIGH   "; break;
-			case 2: s += " HIGH-Z "; break;
-			case 3: s += " ENABLED"; break;
-		}
-	}
-
 	switch (clk1_drive_current)
 	{
 		case 0: s += " 2mA"; break;
@@ -2072,7 +2057,22 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk1_int_mode ? " INT " : " FRAC";
 
-	if (clk_1_Hz > 0.0)
+	if (clk1_enabled)
+	{
+//		s += " ENABLED";
+	}
+	else
+	{
+		switch (clk1_dis_output_mode)
+		{
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
+//			case 3: s += " ENABLED"; break;
+		}
+	}
+
+	if (clk_1_Hz > 0.0 && (clk1_enabled || clk1_dis_output_mode == 3))
 	{
 		String s2;
 		if (clk_1_Hz >= 1e6)
@@ -2138,21 +2138,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk2_pll ? " PLL-B" : " PLL-A";
 
-	if (clk2_enabled)
-	{
-		s += " ENABLED";
-	}
-	else
-	{
-		switch (clk2_dis_output_mode)
-		{
-			case 0: s += " LOW    "; break;
-			case 1: s += " HIGH   "; break;
-			case 2: s += " HIGH-Z "; break;
-			case 3: s += " ENABLED"; break;
-		}
-	}
-
 	switch (clk2_drive_current)
 	{
 		case 0: s += " 2mA"; break;
@@ -2163,7 +2148,22 @@ void __fastcall TForm1::updateFrequencies()
 
 	s += clk2_int_mode ? " INT " : " FRAC";
 
-	if (clk_2_Hz > 0.0)
+	if (clk2_enabled)
+	{
+//		s += " ENABLED";
+	}
+	else
+	{
+		switch (clk2_dis_output_mode)
+		{
+			case 0: s += " LOW    "; break;
+			case 1: s += " HIGH   "; break;
+			case 2: s += " HIGH-Z "; break;
+//			case 3: s += " ENABLED"; break;
+		}
+	}
+
+	if (clk_2_Hz > 0.0 && (clk2_enabled || clk2_dis_output_mode == 3))
 	{
 		String s2;
 		if (clk_2_Hz >= 1e6)
