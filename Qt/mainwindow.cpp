@@ -1709,8 +1709,8 @@ void __fastcall MainWindow::updateFrequencies()
 
 	if (p3 > 0)
 	{
-		const double pll_ref_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
-		pll_a_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+		const double ref_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
+		pll_a_Hz = ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
 	}
 
 	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
@@ -1785,8 +1785,8 @@ void __fastcall MainWindow::updateFrequencies()
 
 	if (p3 > 0)
 	{
-		const double pll_ref_Hz = (pll_b_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
-		pll_b_Hz = pll_ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+		const double ref_Hz = (pll_b_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
+		pll_b_Hz = ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
 	}
 
 	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
