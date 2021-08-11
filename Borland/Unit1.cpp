@@ -1723,14 +1723,39 @@ String __fastcall TForm1::regSettingDescription(const int addr, const uint8_t va
 
 void __fastcall TForm1::updateFrequencies()
 {
-	String  s;
+	String   s;
+	String   s2;
 
 	uint8_t  *reg;
-	uint8_t  r_div;
-	uint8_t  div_by_4;
-	uint32_t p1;
-	uint32_t p2;
-	uint32_t p3;
+
+	uint8_t  ms0_r_div;
+	uint8_t  ms0_div_by_4;
+
+	uint8_t  ms1_r_div;
+	uint8_t  ms1_div_by_4;
+
+	uint8_t  ms2_r_div;
+	uint8_t  ms2_div_by_4;
+
+	uint32_t plla_p1;
+	uint32_t plla_p2;
+	uint32_t plla_p3;
+					
+	uint32_t pllb_p1;
+	uint32_t pllb_p2;
+	uint32_t pllb_p3;
+
+	uint32_t ms0_p1 = 0;
+	uint32_t ms0_p2 = 0;
+	uint32_t ms0_p3 = 0;
+
+	uint32_t ms1_p1 = 0;
+	uint32_t ms1_p2 = 0;
+	uint32_t ms1_p3 = 0;
+
+	uint32_t ms2_p1 = 0;
+	uint32_t ms2_p2 = 0;
+	uint32_t ms2_p3 = 0;
 
 	double pll_a_Hz = 0.0;
 	double pll_b_Hz = 0.0;
@@ -1749,6 +1774,16 @@ void __fastcall TForm1::updateFrequencies()
 	const int      pll_ref_div          = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
 	const double   pll_ref_Hz           = m_xtal_Hz;
 
+	reg     = &m_si5351_reg_values[SI5351_REG_PLLA_PARAMETERS_0];
+	plla_p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
+	plla_p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
+	plla_p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
+
+	reg     = &m_si5351_reg_values[SI5351_REG_PLLB_PARAMETERS_0];
+	pllb_p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
+	pllb_p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
+	pllb_p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
+
 	// extract clk-0 data
 	const int      clk0_src             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 2) & 0x03;
 	const bool     clk0_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x40) ? true : false;
@@ -1758,6 +1793,13 @@ void __fastcall TForm1::updateFrequencies()
 	const int      clk0_drive_current   = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] >> 0) & 0x03;
 	const bool     clk0_inv             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x10) ? true : false;
 	const bool     clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
+
+	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH0_PARAMETERS_1];
+	ms0_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
+	ms0_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
+	ms0_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
+	ms0_r_div    = (reg[2] >> 4) & 0x07;
+	ms0_div_by_4 = (reg[2] >> 2) & 0x03;
 
 	// extract clk-1 data
 	const int      clk1_src             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] >> 2) & 0x03;
@@ -1769,6 +1811,13 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk1_inv             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x10) ? true : false;
 	const bool     clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
 
+	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH1_PARAMETERS_1];
+	ms1_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
+	ms1_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
+	ms1_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
+	ms1_r_div    = (reg[2] >> 4) & 0x07;
+	ms1_div_by_4 = (reg[2] >> 2) & 0x03;
+
 	// extract clk-2 data
 	const int      clk2_src             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] >> 2) & 0x03;
 	const bool     clk2_int_mode        = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x40) ? true : false;
@@ -1779,6 +1828,13 @@ void __fastcall TForm1::updateFrequencies()
 	const bool     clk2_inv             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x10) ? true : false;
 	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
+	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH2_PARAMETERS_1];
+	ms2_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
+	ms2_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
+	ms2_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
+	ms2_r_div    = (reg[2] >> 4) & 0x07;
+	ms2_div_by_4 = (reg[2] >> 2) & 0x03;
+
 	// extract spread spectrum data
 	const bool     ss_enabled           = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0] & 0x80) ? true : false;
 	const bool     ss_center            = (m_si5351_reg_values[SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2] & 0x80) ? true : false;
@@ -1788,15 +1844,10 @@ void __fastcall TForm1::updateFrequencies()
 
 	s = "";
 
-	reg = &m_si5351_reg_values[SI5351_REG_PLLA_PARAMETERS_0];
-	p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
-	p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
-	p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
-
-	if (p3 > 0)
+	if (plla_p3 > 0)
 	{
 		const double ref_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
-		pll_a_Hz = ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
+		pll_a_Hz = ref_Hz * (((double)plla_p1 * plla_p3) + (512.0 * plla_p3) + plla_p2) / (128.0 * plla_p3);
 	}
 
 	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
@@ -1805,7 +1856,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (pll_a_Hz > 0.0)
 	{
-		String s2;
 		if (pll_a_Hz >= 1e6)
 			s2.printf(" %0.7f MHz", pll_a_Hz / 1e6);
 		else
@@ -1818,6 +1868,36 @@ void __fastcall TForm1::updateFrequencies()
 
 	PLLALabel->Caption = s;
 	PLLALabel->Update();
+
+	// ******************************
+	// calculate PLL-B frequency
+
+	s = "";
+
+	if (pllb_p3 > 0)
+	{
+		const double ref_Hz = (pll_b_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
+		pll_b_Hz = ref_Hz * (((double)pllb_p1 * pllb_p3) + (512.0 * pllb_p3) + pllb_p2) / (128.0 * pllb_p3);
+	}
+
+	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
+
+	s += (m_si5351_reg_values[SI5351_REG_CLK7_CONTROL] & 0x40) ? " INT " : " FRAC";
+
+	if (pll_b_Hz > 0.0)
+	{
+		if (pll_b_Hz >= 1e6)
+			s2.printf(" %0.7f MHz", pll_b_Hz / 1e6);
+		else
+			s2.printf(" %0.4f kHz", pll_b_Hz / 1e3);
+		s += s2;
+
+		if (pll_b_reset)
+			s += " RST";
+	}
+
+	PLLBLabel->Caption = s;
+	PLLBLabel->Update();
 
 	// ******************************
 	// spread spectrum
@@ -1838,7 +1918,7 @@ void __fastcall TForm1::updateFrequencies()
 		if (ssudp > 0)
 		{
 			const double pfd_Hz = (pll_a_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
-			const double pll_div = (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);	// a + (b / c)
+			const double pll_div = (((double)plla_p1 * plla_p3) + (512.0 * plla_p3) + plla_p2) / (128.0 * plla_p3);	// a + (b / c)
 
 			if (ss_center)
 			{	// center spread
@@ -1864,42 +1944,6 @@ void __fastcall TForm1::updateFrequencies()
 	}
 
 	// ******************************
-	// calculate PLL-B frequency
-
-	s = "";
-
-	reg = &m_si5351_reg_values[SI5351_REG_PLLB_PARAMETERS_0];
-	p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
-	p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
-	p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
-
-	if (p3 > 0)
-	{
-		const double ref_Hz = (pll_b_src) ? pll_ref_Hz / (1u << clkin_div) : pll_ref_Hz;	// CLKIN/XTAL
-		pll_b_Hz = ref_Hz * (((double)p1 * p3) + (512.0 * p3) + p2) / (128.0 * p3);
-	}
-
-	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
-
-	s += (m_si5351_reg_values[SI5351_REG_CLK7_CONTROL] & 0x40) ? " INT " : " FRAC";
-
-	if (pll_b_Hz > 0.0)
-	{
-		String s2;
-		if (pll_b_Hz >= 1e6)
-			s2.printf(" %0.7f MHz", pll_b_Hz / 1e6);
-		else
-			s2.printf(" %0.4f kHz", pll_b_Hz / 1e3);
-		s += s2;
-
-		if (pll_b_reset)
-			s += " RST";
-	}
-
-	PLLBLabel->Caption = s;
-	PLLBLabel->Update();
-
-	// ******************************
 	// VCXO
 /*
 	reg = &m_si5351_reg_values[SI5351_REG_VCXO_PARAMTER_0];
@@ -1913,37 +1957,26 @@ void __fastcall TForm1::updateFrequencies()
 
 	s = "";
 
-	reg = &m_si5351_reg_values[SI5351_REG_MULTISYNTH0_PARAMETERS_1];
-	p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
-	p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
-	p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
-	r_div    = (reg[2] >> 4) & 0x07;
-	div_by_4 = (reg[2] >> 2) & 0x03;
-
 	if (!clk0_powered_down && clk0_enabled)
 	{
+		const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk0_src)
 		{
-			case 0:
+			case 0:	// XTAL
 				clk_0_Hz = m_xtal_Hz;
 				break;
-			case 1:
+			case 1:	// CLK-IN
 				clk_0_Hz = m_xtal_Hz;
 				break;
-			case 2:
-			case 3:
-				if (p3 > 0 || div_by_4 == 0x03)
-				{
-					const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
-					//clk_0_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-					clk_0_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-				}
+			case 2:	// reserved
+				break;
+			case 3:	// MS0
+				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
+					clk_0_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
 				break;
 		}
-		clk_0_Hz /= 1u << r_div;
+		clk_0_Hz /= 1u << ms0_r_div;
 	}
-
-	// multisync6-7: fOUT = fIN / P1
 
 	s += clk0_powered_down ? " PWR-DN" : " PWR-UP";
 
@@ -1984,7 +2017,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (clk_0_Hz > 0.0 && (clk0_enabled || clk0_dis_output_mode == 3))
 	{
-		String s2;
 		if (clk_0_Hz >= 1e6)
 			s2.sprintf(" %0.7f MHz", clk_0_Hz / 1e6);
 		else
@@ -2003,34 +2035,27 @@ void __fastcall TForm1::updateFrequencies()
 
 	s = "";
 
-	reg      = &m_si5351_reg_values[SI5351_REG_MULTISYNTH1_PARAMETERS_1];
-	p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
-	p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
-	p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
-	r_div    = (reg[2] >> 4) & 0x07;
-	div_by_4 = (reg[2] >> 2) & 0x03;
-
 	if (!clk1_powered_down && clk1_enabled)
 	{
+		const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk1_src)
 		{
-			case 0:
+			case 0:	// XTAL
 				clk_1_Hz = m_xtal_Hz;
 				break;
-			case 1:
+			case 1:	// CLK-IN
 				clk_1_Hz = m_xtal_Hz;
 				break;
-			case 2:
-			case 3:
-				if (p3 > 0 || div_by_4 == 0x03)
-				{
-					const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
-					//clk_1_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-					clk_1_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-				}
+			case 2:	// MS0
+				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
+					clk_1_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				break;
+			case 3:	// MS1
+				if (ms1_p3 > 0 || ms1_div_by_4 == 0x03)
+					clk_1_Hz = (ms1_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms1_p3 * pll_Hz) / (((double)ms1_p1 * ms1_p3) + ms1_p2 + (512.0 * ms1_p3));
 				break;
 		}
-		clk_1_Hz /= 1u << r_div;
+		clk_1_Hz /= 1u << ms1_r_div;
 	}
 
 	// multisync6-7: fOUT = fIN / P1
@@ -2074,7 +2099,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (clk_1_Hz > 0.0 && (clk1_enabled || clk1_dis_output_mode == 3))
 	{
-		String s2;
 		if (clk_1_Hz >= 1e6)
 			s2.sprintf(" %0.7f MHz", clk_1_Hz / 1e6);
 		else
@@ -2094,34 +2118,27 @@ void __fastcall TForm1::updateFrequencies()
 
 	s = "";
 
-	reg = &m_si5351_reg_values[SI5351_REG_MULTISYNTH2_PARAMETERS_1];
-	p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
-	p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
-	p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
-	r_div    = (reg[2] >> 4) & 0x07;
-	div_by_4 = (reg[2] >> 2) & 0x03;
-
 	if (!clk2_powered_down && clk2_enabled)
 	{
+		const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk2_src)
 		{
-			case 0:
+			case 0:	// XTAL
 				clk_2_Hz = m_xtal_Hz;
 				break;
-			case 1:
+			case 1:	// CLK-IN
 				clk_2_Hz = m_xtal_Hz;
 				break;
-			case 2:
-			case 3:
-				if (p3 > 0 || div_by_4 == 0x03)
-				{
-					const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
-					//clk_2_Hz = (p1 == 0 && p2 == 0 && p3 == 1 && div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-					clk_2_Hz = (div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * p3 * pll_Hz) / (((double)p1 * p3) + p2 + (512.0 * p3));
-				}
+			case 2:	// MS0
+				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
+					clk_2_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				break;
+			case 3:	// MS2
+				if (ms2_p3 > 0 || ms2_div_by_4 == 0x03)
+					clk_2_Hz = (ms2_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms2_p3 * pll_Hz) / (((double)ms2_p1 * ms2_p3) + ms2_p2 + (512.0 * ms2_p3));
 				break;
 		}
-		clk_2_Hz /= 1u << r_div;
+		clk_2_Hz /= 1u << ms2_r_div;
 	}
 
 	// multisync6-7: fOUT = fIN / P1
@@ -2165,7 +2182,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (clk_2_Hz > 0.0 && (clk2_enabled || clk2_dis_output_mode == 3))
 	{
-		String s2;
 		if (clk_2_Hz >= 1e6)
 			s2.sprintf(" %0.7f MHz", clk_2_Hz / 1e6);
 		else
