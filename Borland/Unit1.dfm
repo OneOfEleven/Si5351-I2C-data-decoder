@@ -22,7 +22,7 @@ object Form1: TForm1
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
-    Left = 603
+    Left = 639
     Top = 44
     Width = 32
     Height = 13
@@ -30,7 +30,7 @@ object Form1: TForm1
     Caption = 'CLK-0 '
   end
   object Label2: TLabel
-    Left = 603
+    Left = 639
     Top = 68
     Width = 32
     Height = 13
@@ -38,7 +38,7 @@ object Form1: TForm1
     Caption = 'CLK-1 '
   end
   object Label3: TLabel
-    Left = 603
+    Left = 639
     Top = 92
     Width = 32
     Height = 13
@@ -46,7 +46,7 @@ object Form1: TForm1
     Caption = 'CLK-2 '
   end
   object Clock2Label: TLabel
-    Left = 643
+    Left = 679
     Top = 92
     Width = 77
     Height = 14
@@ -59,7 +59,7 @@ object Form1: TForm1
     ParentFont = False
   end
   object Clock0Label: TLabel
-    Left = 643
+    Left = 679
     Top = 44
     Width = 77
     Height = 14
@@ -72,7 +72,7 @@ object Form1: TForm1
     ParentFont = False
   end
   object Clock1Label: TLabel
-    Left = 643
+    Left = 679
     Top = 68
     Width = 77
     Height = 14
@@ -100,7 +100,7 @@ object Form1: TForm1
     Caption = 'XTAL / CLK-IN Frequency '
   end
   object Label6: TLabel
-    Left = 311
+    Left = 283
     Top = 44
     Width = 32
     Height = 13
@@ -108,7 +108,7 @@ object Form1: TForm1
     Caption = 'PLL-A '
   end
   object Label7: TLabel
-    Left = 311
+    Left = 283
     Top = 68
     Width = 32
     Height = 13
@@ -116,7 +116,7 @@ object Form1: TForm1
     Caption = 'PLL-B '
   end
   object PLLALabel: TLabel
-    Left = 351
+    Left = 323
     Top = 44
     Width = 63
     Height = 14
@@ -129,7 +129,7 @@ object Form1: TForm1
     ParentFont = False
   end
   object PLLBLabel: TLabel
-    Left = 351
+    Left = 323
     Top = 68
     Width = 63
     Height = 14

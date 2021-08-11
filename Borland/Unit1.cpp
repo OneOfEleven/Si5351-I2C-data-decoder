@@ -694,12 +694,14 @@ void __fastcall TForm1::loadSettings()
 
 void __fastcall TForm1::saveSettings()
 {
-	// make sure any left over settings from previous versions are deleted
+	// make sure any unused settings from previous versions are deleted
 	DeleteFile(m_ini_filename);
 
 	TIniFile *ini = new TIniFile(m_ini_filename);
 	if (ini == NULL)
 		return;
+
+	ini->WriteString("General", "Saved", Now().FormatString("yyyy.mm.dd hh:nn:ss"));
 
 	ini->WriteInteger("MainForm", "Top", Top);
 	ini->WriteInteger("MainForm", "Left", Left);

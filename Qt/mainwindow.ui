@@ -97,13 +97,13 @@
        <widget class="QLabel" name="PLLALabel">
         <property name="minimumSize">
          <size>
-          <width>250</width>
+          <width>300</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>250</width>
+          <width>300</width>
           <height>16777215</height>
          </size>
         </property>
@@ -434,7 +434,7 @@
         <number>3</number>
        </property>
        <attribute name="horizontalHeaderVisible">
-        <bool>true</bool>
+        <bool>false</bool>
        </attribute>
        <attribute name="horizontalHeaderCascadingSectionResizes">
         <bool>false</bool>

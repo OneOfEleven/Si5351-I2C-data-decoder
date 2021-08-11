@@ -12,6 +12,7 @@
 #include <QStringListModel>
 #include <QTableWidget>
 #include <QMessageBox>
+#include <QDateTime>
 
 #include <stdio.h>
 #include <math.h>
@@ -576,7 +577,7 @@ void __fastcall MainWindow::loadSettings()
 
 void __fastcall MainWindow::saveSettings()
 {
-	{	// make sure any left over settings from previous versions are deleted
+	{	// make sure any unused settings from previous versions are deleted
 		QFile file(m_ini_filename);
 		//const bool res = file.setPermissions(file.fileName(), QFile::WriteOwner | QFile::ReadOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
 		//if (!res)
@@ -586,6 +587,20 @@ void __fastcall MainWindow::saveSettings()
 	}
 
 	QSettings settings(m_ini_filename, QSettings::IniFormat);
+	switch (settings.status())
+	{
+		case QSettings::NoError:
+			break;
+		case QSettings::AccessError:
+			QMessageBox::information(this, "Error", "Access error.");
+			break;
+		case QSettings::FormatError:
+			QMessageBox::information(this, "Error", "Format error.");
+			break;
+	}
+
+	QDateTime now = QDateTime::currentDateTime().toLocalTime();
+	settings.setValue("Saved", now.toString("yyyy.MM.dd HH:mm:ss"));
 
 	settings.beginGroup("MainForm");
 	{
