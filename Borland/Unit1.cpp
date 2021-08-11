@@ -1959,7 +1959,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (!clk0_powered_down && clk0_enabled)
 	{
-		const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk0_src)
 		{
 			case 0:	// XTAL
@@ -1971,8 +1970,11 @@ void __fastcall TForm1::updateFrequencies()
 			case 2:	// reserved
 				break;
 			case 3:	// MS0
-				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
-					clk_0_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				if (ms0_p3 > 0 || ms0_div_by_4 == 3)
+				{
+					const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
+					clk_0_Hz = (ms0_div_by_4 == 3) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				}
 				break;
 		}
 		clk_0_Hz /= 1u << ms0_r_div;
@@ -2037,7 +2039,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (!clk1_powered_down && clk1_enabled)
 	{
-		const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk1_src)
 		{
 			case 0:	// XTAL
@@ -2047,12 +2048,18 @@ void __fastcall TForm1::updateFrequencies()
 				clk_1_Hz = m_xtal_Hz;
 				break;
 			case 2:	// MS0
-				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
-					clk_1_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				if (ms0_p3 > 0 || ms0_div_by_4 == 3)
+				{
+					const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
+					clk_1_Hz = (ms0_div_by_4 == 3) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				}
 				break;
 			case 3:	// MS1
-				if (ms1_p3 > 0 || ms1_div_by_4 == 0x03)
-					clk_1_Hz = (ms1_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms1_p3 * pll_Hz) / (((double)ms1_p1 * ms1_p3) + ms1_p2 + (512.0 * ms1_p3));
+				if (ms1_p3 > 0 || ms1_div_by_4 == 3)
+				{
+					const double pll_Hz = clk1_pll ? pll_b_Hz : pll_a_Hz;
+					clk_1_Hz = (ms1_div_by_4 == 3) ? pll_Hz / 4 : (128.0 * ms1_p3 * pll_Hz) / (((double)ms1_p1 * ms1_p3) + ms1_p2 + (512.0 * ms1_p3));
+				}
 				break;
 		}
 		clk_1_Hz /= 1u << ms1_r_div;
@@ -2120,7 +2127,6 @@ void __fastcall TForm1::updateFrequencies()
 
 	if (!clk2_powered_down && clk2_enabled)
 	{
-		const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
 		switch (clk2_src)
 		{
 			case 0:	// XTAL
@@ -2130,12 +2136,18 @@ void __fastcall TForm1::updateFrequencies()
 				clk_2_Hz = m_xtal_Hz;
 				break;
 			case 2:	// MS0
-				if (ms0_p3 > 0 || ms0_div_by_4 == 0x03)
-					clk_2_Hz = (ms0_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				if (ms0_p3 > 0 || ms0_div_by_4 == 3)
+				{
+					const double pll_Hz = clk0_pll ? pll_b_Hz : pll_a_Hz;
+					clk_2_Hz = (ms0_div_by_4 == 3) ? pll_Hz / 4 : (128.0 * ms0_p3 * pll_Hz) / (((double)ms0_p1 * ms0_p3) + ms0_p2 + (512.0 * ms0_p3));
+				}
 				break;
 			case 3:	// MS2
-				if (ms2_p3 > 0 || ms2_div_by_4 == 0x03)
-					clk_2_Hz = (ms2_div_by_4 == 0x03) ? pll_Hz / 4 : (128.0 * ms2_p3 * pll_Hz) / (((double)ms2_p1 * ms2_p3) + ms2_p2 + (512.0 * ms2_p3));
+				if (ms2_p3 > 0 || ms2_div_by_4 == 3)
+				{
+					const double pll_Hz = clk2_pll ? pll_b_Hz : pll_a_Hz;
+					clk_2_Hz = (ms2_div_by_4 == 3) ? pll_Hz / 4 : (128.0 * ms2_p3 * pll_Hz) / (((double)ms2_p1 * ms2_p3) + ms2_p2 + (512.0 * ms2_p3));
+				}
 				break;
 		}
 		clk_2_Hz /= 1u << ms2_r_div;
