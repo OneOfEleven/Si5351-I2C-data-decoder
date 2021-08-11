@@ -1728,34 +1728,31 @@ void __fastcall TForm1::updateFrequencies()
 
 	uint8_t  *reg;
 
-	uint8_t  ms0_r_div;
-	uint8_t  ms0_div_by_4;
-
-	uint8_t  ms1_r_div;
-	uint8_t  ms1_div_by_4;
-
-	uint8_t  ms2_r_div;
-	uint8_t  ms2_div_by_4;
-
 	uint32_t plla_p1;
 	uint32_t plla_p2;
 	uint32_t plla_p3;
-					
+
 	uint32_t pllb_p1;
 	uint32_t pllb_p2;
 	uint32_t pllb_p3;
 
-	uint32_t ms0_p1 = 0;
-	uint32_t ms0_p2 = 0;
-	uint32_t ms0_p3 = 0;
+	uint8_t  ms0_r_div;
+	uint8_t  ms0_div_by_4;
+	uint32_t ms0_p1;
+	uint32_t ms0_p2;
+	uint32_t ms0_p3;
 
-	uint32_t ms1_p1 = 0;
-	uint32_t ms1_p2 = 0;
-	uint32_t ms1_p3 = 0;
+	uint8_t  ms1_r_div;
+	uint8_t  ms1_div_by_4;
+	uint32_t ms1_p1;
+	uint32_t ms1_p2;
+	uint32_t ms1_p3;
 
-	uint32_t ms2_p1 = 0;
-	uint32_t ms2_p2 = 0;
-	uint32_t ms2_p3 = 0;
+	uint8_t  ms2_r_div;
+	uint8_t  ms2_div_by_4;
+	uint32_t ms2_p1;
+	uint32_t ms2_p2;
+	uint32_t ms2_p3;
 
 	double pll_a_Hz = 0.0;
 	double pll_b_Hz = 0.0;
@@ -1850,21 +1847,21 @@ void __fastcall TForm1::updateFrequencies()
 		pll_a_Hz = ref_Hz * (((double)plla_p1 * plla_p3) + (512.0 * plla_p3) + plla_p2) / (128.0 * plla_p3);
 	}
 
-	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL";
+	s += pll_a_src ? " SRC-CLKIN" : " SRC-XTAL ";
 
 	s += (m_si5351_reg_values[SI5351_REG_CLK6_CONTROL] & 0x40) ? " INT " : " FRAC";
 
 	if (pll_a_Hz > 0.0)
 	{
 		if (pll_a_Hz >= 1e6)
-			s2.printf(" %0.7f MHz", pll_a_Hz / 1e6);
+			s2.printf(" %0.9f MHz", pll_a_Hz / 1e6);
 		else
-			s2.printf(" %0.4f kHz", pll_a_Hz / 1e3);
+			s2.printf(" %0.6f kHz", pll_a_Hz / 1e3);
 		s += s2;
-
-		if (pll_a_reset)
-			s += " RST";
 	}
+
+	if (pll_a_reset)
+		s += " RST";
 
 	PLLALabel->Caption = s;
 	PLLALabel->Update();
@@ -1880,21 +1877,21 @@ void __fastcall TForm1::updateFrequencies()
 		pll_b_Hz = ref_Hz * (((double)pllb_p1 * pllb_p3) + (512.0 * pllb_p3) + pllb_p2) / (128.0 * pllb_p3);
 	}
 
-	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL";
+	s += pll_b_src ? " SRC-CLKIN" : " SRC-XTAL ";
 
 	s += (m_si5351_reg_values[SI5351_REG_CLK7_CONTROL] & 0x40) ? " INT " : " FRAC";
 
 	if (pll_b_Hz > 0.0)
 	{
 		if (pll_b_Hz >= 1e6)
-			s2.printf(" %0.7f MHz", pll_b_Hz / 1e6);
+			s2.printf(" %0.9f MHz", pll_b_Hz / 1e6);
 		else
-			s2.printf(" %0.4f kHz", pll_b_Hz / 1e3);
+			s2.printf(" %0.6f kHz", pll_b_Hz / 1e3);
 		s += s2;
-
-		if (pll_b_reset)
-			s += " RST";
 	}
+
+	if (pll_b_reset)
+		s += " RST";
 
 	PLLBLabel->Caption = s;
 	PLLBLabel->Update();
@@ -2020,9 +2017,9 @@ void __fastcall TForm1::updateFrequencies()
 	if (clk_0_Hz > 0.0 && (clk0_enabled || clk0_dis_output_mode == 3))
 	{
 		if (clk_0_Hz >= 1e6)
-			s2.sprintf(" %0.7f MHz", clk_0_Hz / 1e6);
+			s2.sprintf(" %0.9f MHz", clk_0_Hz / 1e6);
 		else
-			s2.sprintf(" %0.4f kHz", clk_0_Hz / 1e3);
+			s2.sprintf(" %0.6f kHz", clk_0_Hz / 1e3);
 		s += s2;
 	}
 
@@ -2107,9 +2104,9 @@ void __fastcall TForm1::updateFrequencies()
 	if (clk_1_Hz > 0.0 && (clk1_enabled || clk1_dis_output_mode == 3))
 	{
 		if (clk_1_Hz >= 1e6)
-			s2.sprintf(" %0.7f MHz", clk_1_Hz / 1e6);
+			s2.sprintf(" %0.9f MHz", clk_1_Hz / 1e6);
 		else
-			s2.sprintf(" %0.4f kHz", clk_1_Hz / 1e3);
+			s2.sprintf(" %0.6f kHz", clk_1_Hz / 1e3);
 		s += s2;
 	}
 
@@ -2195,9 +2192,9 @@ void __fastcall TForm1::updateFrequencies()
 	if (clk_2_Hz > 0.0 && (clk2_enabled || clk2_dis_output_mode == 3))
 	{
 		if (clk_2_Hz >= 1e6)
-			s2.sprintf(" %0.7f MHz", clk_2_Hz / 1e6);
+			s2.sprintf(" %0.9f MHz", clk_2_Hz / 1e6);
 		else
-			s2.sprintf(" %0.4f kHz", clk_2_Hz / 1e3);
+			s2.sprintf(" %0.6f kHz", clk_2_Hz / 1e3);
 		s += s2;
 	}
 
