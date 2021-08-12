@@ -16,7 +16,7 @@ Use either the free Qt dev software or Borland C++ Builder v6 version (quite old
 
 ## Capture hardware
 
-If you don't already have a logic analyser then get yourself one of these 24MHz 8-channel units ebay etc ..
+If you don't already have a logic analyser then get yourself one of these 24MHz 8-channel units off ebay or such like ..
 
 <div align="center">
 <img src="/LogicAnalyser_24MHz_8ch.png">
