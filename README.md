@@ -14,7 +14,15 @@ Then just load that text file into this software. You can then single step throu
 
 Use either the free Qt dev software or Borland C++ Builder v6 version (quite old now but still very nice and simple).
 
-## Stuff
+## Capture hardware
+
+If you don't already have a logic analyser then get yourself one of these 24MHz 8-channel units ebay etc ..
+
+<div align="center">
+<img src="/LogicAnalyser_24MHz_8ch.png">
+</div>
+
+## Using
 
 Click the desired lines (and/or use your keyboard up/down keys) on the left hand listview to step through to see the register values/pll frequencies/clk-out states at each step ..
 
