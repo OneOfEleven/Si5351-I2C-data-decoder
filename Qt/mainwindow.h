@@ -56,6 +56,8 @@ private:
 
 	bool m_shown;
 
+	QString m_title_string;
+
 	QString m_ini_filename;
 
 	QString                               m_filename;

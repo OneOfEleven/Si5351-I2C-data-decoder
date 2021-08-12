@@ -368,24 +368,54 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_shown = false;
 
-	{
-		QFileInfo info(QApplication::applicationFilePath());
-		m_ini_filename = info.path() + info.baseName() + ".ini";
+	// ***********************
+	// create the settings filename
 
-		// QString QFileInfo::completeBaseName () const
-		// Returns file name with shortest extension removed (file.tar.gz -> file.tar)
-		//
-		// QString QFileInfo::baseName () const
-		// Returns file name with longest extension removed (file.tar.gz -> file)
-	}
-
-	{
-		QString s = QApplication::applicationVersion();
-		#ifdef _DEBUG
-			s += " debug";
+	QFileInfo info(QApplication::applicationFilePath());
+	#if 1
+		#if defined(Q_WS_MAC)
+			m_ini_filename = QDir::currentPath() + "/" + info.baseName() + ".ini";
+		#else
+			m_ini_filename = QCoreApplication::applicationDirPath() + "/" + info.baseName() + ".ini";
 		#endif
-		this->setWindowTitle(QApplication::applicationName() + "   v" + s + "   compiled " + __DATE__ + " " + __TIME__);
+	#else
+		m_ini_filename = info.path() + info.baseName() + ".ini";
+	#endif
+	//const int but = QMessageBox::information(this, "Info", m_ini_filename, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+	//QMessageBox::information(this, "Info", info.baseName());	// exe filename without the extension
+	//QMessageBox::information(this, "Info", info.filePath());	// complete filepath/name/ext
+	//QMessageBox::information(this, "Info", info.path());		// complete filepath
+/*
+	QMessageBox mb(
+		QApplication::applicationName(),
+		"Filename ..\n\n" + m_ini_filename,
+		QMessageBox::Question,
+		QMessageBox::Ok     | QMessageBox::Default,
+		QMessageBox::Cancel | QMessageBox::Escape,
+		QMessageBox::NoButton,
+		this);
+	if (mb.exec() == QMessageBox::Ok)
+	{
 	}
+*/
+	// ***********************
+	// create the main window title string
+
+	m_title_string = QApplication::applicationName();
+	m_title_string += "  v" + QApplication::applicationVersion();
+	#ifdef _DEBUG
+		m_title_string += "  debug";
+	#endif
+	#if defined(Q_OS_WIN)
+		m_title_string += "  Win";
+	#elif defined(Q_OS_MAC)
+		m_title_string += "  MAC";
+	#endif
+	m_title_string += "  compiled with QT v" + QString(QT_VERSION_STR) + " " __DATE__ + " " + __TIME__;
+
+	this->setWindowTitle(m_title_string);
+
+	// ***********************
 
 	ui->FilenameLabel->setText("");
 
@@ -592,10 +622,10 @@ void __fastcall MainWindow::saveSettings()
 		case QSettings::NoError:
 			break;
 		case QSettings::AccessError:
-			QMessageBox::information(this, "Error", "Access error.");
+			QMessageBox::warning(this, "Error", "Access error.");
 			break;
 		case QSettings::FormatError:
-			QMessageBox::information(this, "Error", "Format error.");
+			QMessageBox::warning(this, "Error", "Format error.");
 			break;
 	}
 
