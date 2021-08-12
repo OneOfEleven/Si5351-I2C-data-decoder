@@ -12,7 +12,7 @@ Then just load that text file into this software. You can then single step throu
 
 ## Compiling
 
-Now have a Borland C++ Builder v6 version and a Qt version.
+Use either the free Qt dev software or Borland C++ Builder v6 version (quite old now but still very nice and simple).
 
 ## Stuff
 
