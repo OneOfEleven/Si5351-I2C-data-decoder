@@ -67,6 +67,7 @@ __published:	// IDE-managed Components
 	TListView *FileListView;
 	TListView *RegisterListView;
 	TSplitter *Splitter1;
+	TButton *TestButton;
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall FormDestroy(TObject *Sender);
 	void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
@@ -77,6 +78,7 @@ __published:	// IDE-managed Components
 	void __fastcall FileListViewSelectItem(TObject *Sender, TListItem *Item,
           bool Selected);
 	void __fastcall FileListViewClick(TObject *Sender);
+	void __fastcall TestButtonClick(TObject *Sender);
 
 private:	// User declarations
 
@@ -85,6 +87,7 @@ private:	// User declarations
 	bool m_closing;
 
 	String                                m_filename;
+	std::vector <uint8_t>                 m_file_data;
 	std::vector < std::vector <String> >  m_parsed_file_lines;
 	std::vector < std::vector <uint8_t> > m_file_line_reg_values;
 
@@ -107,6 +110,8 @@ private:	// User declarations
 	int __fastcall parseString(String s, String separator, std::vector <String> &params);
 
 	bool __fastcall loadFile(String filename);
+
+	bool __fastcall processData(std::vector <uint8_t> &file_data);
 
 	String __fastcall binToStr(const uint64_t value, const int digits);
 

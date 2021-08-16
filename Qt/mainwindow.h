@@ -47,7 +47,9 @@ private slots:
 
 	void on_splitter_splitterMoved(int pos, int index);
 
-protected:
+	void on_testPushButton_clicked();
+
+	protected:
 	void showEvent(QShowEvent *event);
 	void resizeEvent(QResizeEvent *event);
 
@@ -61,6 +63,7 @@ private:
 	QString m_ini_filename;
 
 	QString                               m_filename;
+	std::vector <uint8_t>                 m_file_data;
 	std::vector < std::vector <QString> > m_parsed_file_lines;
 	std::vector < std::vector <uint8_t> > m_file_line_reg_values;
 
@@ -80,6 +83,8 @@ private:
 	void __fastcall saveSettings();
 
 	bool __fastcall loadFile(QString filename);
+
+	bool __fastcall processData(std::vector < std::vector <QString> > &parsed_file_lines);
 
 	void __fastcall resetSi5351RegValues();
 

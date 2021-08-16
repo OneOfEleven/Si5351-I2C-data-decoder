@@ -29,6 +29,21 @@
 
 // ****************************************************************
 
+#define IF_FREQ_HZ							10000
+#define SAMPLE_CLOCK_HZ						200000
+
+#define SI5351_XTAL_HZ						27000000
+
+#define SI5351_PLL_VCO_MAX_HZ				900000000
+#define SI5351_PLL_VCO_MIN_HZ				600000000
+
+#define SI5351_MS_MAX_HZ					235000000
+#define SI5351_MS_MIN_HZ					500000
+
+#define SI5351_MS_DIVBY4_HZ				150000000
+
+#define SI5351_CLKOUT_MIN_HZ				4000
+
 typedef struct
 {
 	int     addr;
@@ -353,6 +368,390 @@ typedef enum
 } si5351RDiv_t;
 
 // ****************************************************************
+// test our Si5351 routines
+
+struct
+{
+	uint32_t pll_Hz[2];
+	uint32_t clk_Hz[3];
+	// CLK, PLL-A/B and MS-0/1/2 register values
+	// start byte is the Si5352 first address (PLL-A)
+	uint8_t si5351_buffer[1 + 1 + 8 + 2 + (8 * 2) + (8 * 3)];
+} si5351_data;
+
+uint32_t pll_findVCOfreq(const uint32_t ref_Hz, const uint32_t ms_Hz)
+{	// try to find an even integer PLL VCO frequency - this would produce the minimum level of output jitter
+
+	#if 1
+		const uint32_t vco_lo = SI5351_PLL_VCO_MIN_HZ;
+		const uint32_t vco_hi = SI5351_PLL_VCO_MAX_HZ;
+	#else
+		const uint32_t vco_lo = (min_pll_Hz == 0) ? SI5351_PLL_VCO_MIN_HZ ? (uint64_t)min_pll_Hz;
+		const uint32_t vco_hi = (max_pll_Hz == 0) ? SI5351_PLL_VCO_MAX_HZ ? (uint64_t)max_pll_Hz;
+	#endif
+
+	// find the highest PLL VCO frequency that uses an even integer fout divider ratio
+	uint32_t highest_Hz = 0;
+	uint32_t vco = vco_lo;
+	vco /= ref_Hz;
+	vco *= ref_Hz;
+	while (vco <= vco_hi)
+	{
+		if (vco >= vco_lo)
+		{
+			const uint32_t a = vco / ms_Hz;
+			const uint32_t f = vco % ms_Hz;
+			if ((a & 1) == 0 && f == 0)
+			{	// found an even integer frequency
+				if (a >= 4 && (highest_Hz == 0 || highest_Hz < vco))
+					highest_Hz = vco;
+			}
+		}
+		vco += ref_Hz;
+	}
+
+/*
+	// compute the PLL VCO frequency
+	pll_Hz = (ms_Hz * ms_a) + ((ms_Hz * ms_b) / ms_c);
+
+	// fractional part
+	const uint32_t denom = (1u << 20) - 1;
+	//ms_b = ((uint64_t)(pll_Hz % ms_Hz) * denom) / ms_Hz;
+	//ms_c = (ms_b) ? denom : 1;
+
+	// optimise the fractional register values
+	if (ms_b && ms_c)
+	{
+		// compute the GCD (Greatest Common Divisor)
+		uint32_t b = ms_b;
+		uint32_t c = ms_c;
+		while (c)
+		{
+			b %= c;
+			if (!b)
+			{
+				b = c;
+				break;
+			}
+			c %= b;
+		}
+		const uint32_t gcd = b;
+		if (gcd > 1)
+		{
+			ms_b /= gcd;
+			ms_c /= gcd;
+		}
+	}
+*/
+
+	return highest_Hz;
+}
+
+void pll_setBuffer(const unsigned int reg, uint32_t pll_a, uint32_t pll_b, uint32_t pll_c, const uint8_t r_div, const uint8_t div_by_4)
+{
+	pll_a <<= 7;
+	pll_b <<= 7;
+	const uint32_t f  = pll_b / pll_c;
+	const uint32_t p1 = pll_a +  f - 512;
+	const uint32_t p2 = pll_b - (f * pll_c);
+	const uint32_t p3 = pll_c;
+
+	uint8_t *p = &si5351_data.si5351_buffer[reg];
+	*p++ =  (p3 >>  8) & 0xff;
+	*p++ =  (p3 >>  0) & 0xff;
+	*p++ = ((p1 >> 16) & 0x03) | ((r_div & 0x07) << 4) | ((div_by_4 & 0x03) << 2);
+	*p++ =  (p1 >>  8) & 0xff;
+	*p++ =  (p1 >>  0) & 0xff;
+	*p++ = ((p3 >> 12) & 0xf0) | ((p2 >> 16) & 0x0f);
+	*p++ =  (p2 >>  8) & 0xff;
+	*p++ =  (p2 >>  0) & 0xff;
+}
+
+uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
+{
+	const uint32_t ref_Hz = SI5351_XTAL_HZ;
+	uint8_t *p;
+	uint32_t pll_Hz       = 0;
+	uint32_t pll_a        = 0;
+	uint32_t pll_b        = 0;
+	uint32_t pll_c        = 0;
+	uint32_t ms_a         = 0;
+	uint32_t ms_b         = 0;
+	uint32_t ms_c         = 1;
+	uint8_t  ms_r_div     = 0;
+	uint8_t  ms_div_by_4  = 0;
+	uint32_t ms_Hz        = freq_Hz;
+
+	if (ms_index >= 3)
+		return 0;
+
+	const uint8_t pll_index = (ms_index <= 1) ? 0 : 1;	// PLL-A or PLL-B
+
+//	if (ms_Hz > SI5351_MS_MAX_HZ) ms_Hz = SI5351_MS_MAX_HZ;
+//	else
+//	if (ms_Hz < SI5351_CLKOUT_MIN_HZ) ms_Hz = SI5351_CLKOUT_MIN_HZ;
+
+	// **********
+	// compute the PLL frequency and MS required register values
+
+	// compute the required output R-divider value (1, 2, 4, 8, 16, 32, 64 or 128)
+	while (ms_r_div < 7 && ms_Hz < SI5351_MS_MIN_HZ)
+	{
+		ms_r_div++;
+		ms_Hz <<= 1;
+	}
+
+	// PLL VCO frequency
+	pll_Hz = (ms_index == 1 && si5351_data.pll_Hz[0] > 0) ? si5351_data.pll_Hz[0] : pll_findVCOfreq(ref_Hz, ms_Hz);
+
+	if (pll_Hz > 0)
+	{	// found a preferred PLL VCO frequency to use
+		ms_a = pll_Hz / ms_Hz;
+	}
+	else
+	{	// desired even integer PLL divider value not found
+		ms_a = SI5351_PLL_VCO_MAX_HZ / ms_Hz;    // use the maximum VCO frequency we can
+		ms_a -= ms_a & 1u;                       // ensure even to reduce phase noise/jitter .. round down
+		//ms_a = SI5351_PLL_VCO_MIN_HZ / ms_Hz;  // use the minimum VCO frequency we can
+		//ms_a += ms_a & 1u;                     // ensure even to reduce phase noise/jitter .. round up
+	}
+
+	// valid MS divider value is 4, 6 or 8 to 2048
+	if (ms_a <    6) ms_a = 4;
+	else
+	if (ms_a <    8) ms_a = 6;
+	else
+	if (ms_a > 2048) ms_a = 2048;
+
+	//ms_b = 0;
+	//ms_c = 1;
+
+	if (ms_a == 4)
+	{	// fixed divide by 4 output mode
+		ms_div_by_4 = 3;
+		//ms_b        = 0;
+		//ms_c        = 1;
+	}
+
+	if (ms_index != 1)
+	{
+		// compute the actual PLL VCO frequency
+		pll_Hz = (ms_Hz * ms_a) + (((uint64_t)ms_Hz * ms_b) / ms_c);
+
+		// **********
+		// compute the PLL register values
+		// ref_Hz * (a + (b / c)) = pll_Hz
+
+		pll_a = pll_Hz / ref_Hz;     // integer part
+		pll_b = pll_Hz % ref_Hz;     // fractional part
+		pll_c = ref_Hz;              //    "         "
+
+		if (pll_a < 15) pll_a = 15;
+		else
+		if (pll_a > 90) pll_a = 90;
+
+		// optimise the fractional register values
+		if (pll_b && pll_c)
+		{	// compute the GCD (Greatest Common Divisor)
+			uint32_t b = pll_b;
+			uint32_t c = pll_c;
+			while (c)
+			{
+				b %= c;
+				if (!b)
+				{
+					b = c;
+					break;
+				}
+				c %= b;
+			}
+			const uint32_t gcd = b;
+			if (gcd > 1)
+			{
+				pll_b /= gcd;
+				pll_c /= gcd;
+			}
+		}
+
+		if (pll_b == 0 || pll_c == 0)
+		{
+			pll_b = 0;
+			pll_c = 1;
+		}
+
+		// **********
+
+		// recompute the final PLL VCO frequency
+		// pll_Hz = ref_Hz * (a + (b / c))
+		pll_Hz = (ref_Hz * pll_a) + (((uint64_t)ref_Hz * pll_b) / pll_c);
+	}
+
+	// recompute the MS output frequency
+	// ms_Hz = pll_Hz / (a + (b / c))
+	ms_Hz   = ((uint64_t)pll_Hz << 20) / (((uint64_t)ms_a << 20) + (((uint64_t)ms_b << 20) / ms_c));
+	//ms_Hz = (pll_Hz / ms_a) - ((pll_Hz * ms_b) / ms_c);	// test me
+	ms_Hz >>= ms_r_div;
+
+	// **********
+	// save the results
+
+	const unsigned int start_reg = SI5351_REG_PLL_INPUT_SOURCE;
+
+	if (ms_index == 0)
+	{
+		memset(&si5351_data.pll_Hz[0], 0, sizeof(&si5351_data.pll_Hz));
+		memset(&si5351_data.clk_Hz[0], 0, sizeof(&si5351_data.clk_Hz));
+		memset(&si5351_data.si5351_buffer[0], 0, sizeof(&si5351_data.si5351_buffer));
+	}
+
+	si5351_data.pll_Hz[pll_index] = pll_Hz;
+	si5351_data.clk_Hz[ ms_index] = ms_Hz;
+
+	si5351_data.si5351_buffer[0] = start_reg;	// start byte is the initial register address
+
+	// reg-15 .. CLKIN_DIV = /1, PLL-B_SRC = XTAL, PLL-A_SRC = XTAL
+	p = &si5351_data.si5351_buffer[SI5351_REG_PLL_INPUT_SOURCE - (start_reg - 1)];
+	*p = (0u << 6) | (0u << 3) | (0u << 2);
+
+	// CLK-0 .. Powered UP, Integer mode, PLL-A as MS0 source, Not inverted, MS0 as CLK-0 source, 8mA CLK output current
+	if (ms_index == 0)
+		si5351_data.si5351_buffer[SI5351_REG_CLK0_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (0u << 5) | (0u << 4) | (3u << 2) | (3u << 0);
+
+	// CLK-1 .. Powered UP, Integer mode, PLL-A as MS1 source, Not inverted, MS1 as CLK-1 source, 2mA CLK output current
+	if (ms_index <= 1)
+		si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (0u << 5) | (0u << 4) | (3u << 2) | (0u << 0);
+
+	// CLK-2 .. Powered UP, Integer mode, PLL-B as MS2 source, Not inverted, MS2 as CLK-2 source, 8mA CLK output current
+	if (ms_index == 2)
+		si5351_data.si5351_buffer[SI5351_REG_CLK2_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (1u << 5) | (0u << 4) | (3u << 2) | (3u << 0);
+
+	// unused disabled stated = HIGH_Z, used disab;ed state = LOW
+	p = &si5351_data.si5351_buffer[SI5351_REG_CLK3_0_DISABLE_STATE - (start_reg - 1)];
+	*p++ = (2u << 6) | (0u << 4) | (0u << 2) | (0u << 0);
+	*p++ = (2u << 6) | (2u << 4) | (2u << 2) | (2u << 0);
+
+	if (pll_index <= 1)
+	{	// PLL reg values
+
+		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce the output jitter
+		p = &si5351_data.si5351_buffer[SI5351_REG_CLK6_CONTROL + pll_index - (start_reg - 1)];
+		*p &= ~(1u << 6);
+		*p |= ((pll_a & 1) == 0 && pll_b == 0) ? 1u << 6 : 0u;
+
+		pll_setBuffer(SI5351_REG_PLLA_PARAMETERS_0 + (8 * pll_index) - (start_reg - 1), pll_a, pll_b, pll_c, 0, 0);
+	}
+
+	if (ms_index <= 5)
+	{	// MS reg values
+
+		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
+		p = &si5351_data.si5351_buffer[SI5351_REG_CLK0_CONTROL + ms_index - (start_reg - 1)];
+		*p &= ~(1u << 6);
+		*p |= ((ms_a & 1) == 0 && ms_b == 0) ? 1u << 6 : 0u;
+
+		pll_setBuffer(SI5351_REG_MULTISYNTH0_PARAMETERS_1 + (8 * ms_index) - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
+	}
+
+	if (ms_index <= 1)
+	{	// set CLK-1 output to 'SAMPLE_CLOCK_HZ' (uses PLL-A as the clock source)
+
+		pll_Hz = si5351_data.pll_Hz[0];	// PLL-A frequency
+
+		ms_r_div    = 0;
+		ms_div_by_4 = 0;
+		ms_Hz       = SAMPLE_CLOCK_HZ;	// desired MS output frequency
+
+		// compute the required output R-divider value (1, 2, 4, 8, 16, 32, 64 or 128)
+		while (ms_r_div < 7 && ms_Hz < SI5351_MS_MIN_HZ)
+		{
+			ms_r_div++;
+			ms_Hz <<= 1;
+		}
+
+		// integer part .. valid MS values are 4, 6 and 8 to 2048
+		ms_a = pll_Hz / ms_Hz;
+		if (ms_a < 6)
+		{	// fixed divide by 4 mode
+			ms_a  = 4;
+			ms_Hz = pll_Hz / ms_a;
+
+			ms_div_by_4 = 3;
+			ms_b        = 0;
+			ms_c        = 1;
+		}
+		else
+		if (ms_a < 8)
+		{
+			ms_a  = 6;
+			ms_Hz = pll_Hz / ms_a;
+		}
+		else
+		if (ms_a > 2048)
+		{
+			ms_a  = 2048;
+			ms_Hz = pll_Hz / ms_a;
+		}
+
+		if (ms_a > 4)
+		{	// compute the fractional part
+
+			//const uint32_t denom = 10000
+			const uint32_t denom = (1u << 20) - 1;
+			ms_b = ((uint64_t)(pll_Hz % ms_Hz) * denom) / ms_Hz;
+			ms_c = (ms_b > 0) ? denom : 1;
+
+			// optimise the fractional register values
+			if (ms_b && ms_c)
+			{	// compute the GCD (Greatest Common Divisor)
+				uint32_t b = ms_b;
+				uint32_t c = ms_c;
+				while (c)
+				{
+					b %= c;
+					if (!b)
+					{
+						b = c;
+						break;
+					}
+					c %= b;
+				}
+				const uint32_t gcd = b;
+				if (gcd > 1)
+				{	// scale down the fractional reg values
+					ms_b /= gcd;
+					ms_c /= gcd;
+				}
+			}
+
+			if (ms_b == 0 || ms_c == 0)
+				ms_c = 1;
+		}
+
+		// recompute the MS output frequency
+		// ms_Hz = pll_Hz / (a + (b / c))
+		ms_Hz = ((uint64_t)pll_Hz << 20) / (((uint64_t)ms_a << 20) + (((uint64_t)ms_b << 20) / ms_c));
+		//ms_Hz = (pll_Hz / ms_a) - ((pll_Hz * ms_b) / ms_c);	// test me
+		ms_Hz >>= ms_r_div;
+
+		si5351_data.clk_Hz[1] = ms_Hz;
+
+		{	// MS reg values
+
+			// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
+			p = &si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)];
+			*p &= ~(1u << 6);
+			*p |= ((ms_a & 1) == 0 && ms_b == 0) ? 1u << 6 : 0u;
+
+			pll_setBuffer(SI5351_REG_MULTISYNTH1_PARAMETERS_1 - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
+		}
+	}
+
+	// **********
+
+	return si5351_data.clk_Hz[ms_index];
+}
+
+// ****************************************************************
 
 TForm1 *Form1 = NULL;
 
@@ -653,7 +1052,8 @@ void __fastcall TForm1::WMInitGUI(TMessage &msg)
 //	::SetForegroundWindow(Handle);
 
 	if (!m_filename.IsEmpty())
-		loadFile(m_filename);
+		if (loadFile(m_filename))
+			processData(m_file_data);
 
 	updateRegisterListView(false);
 }
@@ -758,9 +1158,6 @@ int __fastcall TForm1::parseString(String s, String separator, std::vector <Stri
 
 bool __fastcall TForm1::loadFile(String filename)
 {
-	std::vector <uint8_t> m_file_data;
-
-	// ***************************
 	// load the file in
 
 	#if (__BORLANDC__ < 0x0600)
@@ -791,37 +1188,45 @@ bool __fastcall TForm1::loadFile(String filename)
 		return false;
 	}
 
-	m_file_data.resize(file_size + 1);
+	std::vector <uint8_t> file_data(file_size + 1);
 
-	if (fread(&m_file_data[0], 1, file_size, file) != file_size)
+	if (fread(&file_data[0], 1, file_size, file) != file_size)
 	{
 		fclose(file);
 		return false;
 	}
 
-	m_file_data[file_size] = 0;
+	file_data[file_size] = 0;
 
 	fclose(file);
 
+	m_file_data = file_data;
+	m_filename = filename;
+
+	return true;
+}
+
+bool __fastcall TForm1::processData(std::vector <uint8_t> &file_data)
+{
 	// ***************************
 	// extract each text line
 
 	m_parsed_file_lines.resize(0);
 
-	for (unsigned int i = 0; i < m_file_data.size(); )
+	for (unsigned int i = 0; i < file_data.size(); )
 	{
 		String line;
 
 		// find the end of the line
-		while (i < m_file_data.size())
+		while (i < file_data.size())
 		{
-			char c = m_file_data[i++];
+			char c = file_data[i++];
 
 			if (c == '\r' || c == '\n')
 			{
-				if (i < m_file_data.size())
+				if (i < file_data.size())
 				{	// drop any following cr/lf
-					const char c2 = m_file_data[i];
+					const char c2 = file_data[i];
 					if ((c == '\r' && c2 == '\n') || (c == '\n' && c2 == '\r'))
 						i++;
 				}
@@ -847,6 +1252,9 @@ bool __fastcall TForm1::loadFile(String filename)
 		line = line.Trim();
 
 		if (line.IsEmpty())
+			continue;
+
+		if (line[1] == '#' || line[1] == ';')	// drop comment lines
 			continue;
 
 		// parse the text line up
@@ -963,8 +1371,6 @@ bool __fastcall TForm1::loadFile(String filename)
 	}
 
 	// ***************************
-
-	m_filename = !m_parsed_file_lines.empty() ? filename : String("");
 
 	FilenameEdit->Text = m_filename;
 
@@ -2360,7 +2766,8 @@ void __fastcall TForm1::selectFile()
 		return;
 
 	if (loadFile(OpenDialog1->FileName.Trim()))
-		updateRegisterListView(false);
+		if (processData(m_file_data))
+			updateRegisterListView(false);
 }
 
 void __fastcall TForm1::XtalFreqEditChange(TObject *Sender)
@@ -2478,5 +2885,30 @@ void __fastcall TForm1::FileListViewClick(TObject *Sender)
 
 	updateRegisterListView(false);
 */
+}
+
+void __fastcall TForm1::TestButtonClick(TObject *Sender)
+{
+	const uint32_t output_Hz = 201123456;
+
+	pll_calcFrequency(output_Hz,              0);
+	pll_calcFrequency(output_Hz - IF_FREQ_HZ, 2);
+
+	m_file_data.resize(0);
+
+	for (unsigned int i = 0; i < ARRAY_SIZE(si5351_data.si5351_buffer); i++)
+	{
+		String s;
+		const uint8_t b = si5351_data.si5351_buffer[i];
+		s.sprintf(" 0x%02x", b);
+		for (int k = 1; k <= s.Length(); k++)
+			m_file_data.push_back((uint8_t)s[k]);
+	}
+
+//	m_file_data.push_back(0);
+
+	processData(m_file_data);
+
+	updateRegisterListView(false);
 }
 

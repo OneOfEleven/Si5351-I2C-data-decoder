@@ -297,6 +297,16 @@ object Form1: TForm1
       OnResize = RegisterListViewResize
     end
   end
+  object TestButton: TButton
+    Left = 8
+    Top = 64
+    Width = 75
+    Height = 25
+    Caption = 'Test'
+    TabOrder = 4
+    Visible = False
+    OnClick = TestButtonClick
+  end
   object OpenDialog1: TOpenDialog
     Filter = 'All files (*.*)|*.*|Text files (*.txt)|*.txt'
     FilterIndex = 2
