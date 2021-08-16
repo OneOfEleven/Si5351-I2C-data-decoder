@@ -45,8 +45,6 @@
 
 #define SI5351_MS_DIVBY4_HZ				150000000
 
-#define SI5351_CLKOUT_MIN_HZ			4000
-
 typedef struct
 {
 	int     addr;
@@ -390,6 +388,7 @@ uint32_t pll_findVCOfreq(const uint32_t ref_Hz, const uint32_t ms_Hz)
 		const uint32_t vco_lo = SI5351_PLL_VCO_MIN_HZ;
 		const uint32_t vco_hi = SI5351_PLL_VCO_MAX_HZ;
 	#else
+		// use the PLL min/max limits we previously tested for
 		const uint32_t vco_lo = (min_pll_Hz == 0) ? SI5351_PLL_VCO_MIN_HZ ? (uint64_t)min_pll_Hz;
 		const uint32_t vco_hi = (max_pll_Hz == 0) ? SI5351_PLL_VCO_MAX_HZ ? (uint64_t)max_pll_Hz;
 	#endif
@@ -407,7 +406,7 @@ uint32_t pll_findVCOfreq(const uint32_t ref_Hz, const uint32_t ms_Hz)
 			const uint32_t f = vco % ms_Hz;
 			if ((a & 1) == 0 && f == 0)
 			{	// found an even integer frequency
-				if (a >= 4 && (highest_Hz == 0 || highest_Hz < vco))
+				if ((a == 4 || a >= 8) && (highest_Hz == 0 || highest_Hz < vco))
 					highest_Hz = vco;
 			}
 		}
@@ -520,10 +519,8 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 		//ms_a += ms_a & 1u;                     // ensure even to reduce phase noise/jitter .. round up
 	}
 
-	// valid MS divider value is 4, 6 or 8 to 2048
-	if (ms_a <    6) ms_a = 4;
-	else
-	if (ms_a <    8) ms_a = 6;
+	// valid MS divider value is 4 or 8 to 2048
+	if (ms_a <    8) ms_a = 4;
 	else
 	if (ms_a > 2048) ms_a = 2048;
 
@@ -639,8 +636,10 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 
 		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce the output jitter
 		p = &si5351_data.si5351_buffer[SI5351_REG_CLK6_CONTROL + pll_index - (start_reg - 1)];
-		*p &= ~(1u << 6);
-		*p |= ((pll_a & 1) == 0 && pll_b == 0) ? 1u << 6 : 0u;
+		if ((pll_a & 1) == 0 && pll_b == 0)
+			*p |=   1u << 6;	// INT mode
+		else
+			*p &= ~(1u << 6);	// FRAC mode
 
 		pll_setBuffer(SI5351_REG_PLLA_PARAMETERS_0 + (8 * pll_index) - (start_reg - 1), pll_a, pll_b, pll_c, 0, 0);
 	}
@@ -650,8 +649,10 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 
 		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
 		p = &si5351_data.si5351_buffer[SI5351_REG_CLK0_CONTROL + ms_index - (start_reg - 1)];
-		*p &= ~(1u << 6);
-		*p |= ((ms_a & 1) == 0 && ms_b == 0) ? 1u << 6 : 0u;
+		if ((ms_a & 1) == 0 && ms_b == 0)
+			*p |=   1u << 6;	// set bit
+		else
+			*p &= ~(1u << 6);	// clear bit
 
 		pll_setBuffer(SI5351_REG_MULTISYNTH0_PARAMETERS_1 + (8 * ms_index) - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
 	}
@@ -661,6 +662,8 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 
 		pll_Hz = si5351_data.pll_Hz[0];	// PLL-A frequency
 
+		ms_b        = 0;
+		ms_c        = 1;
 		ms_r_div    = 0;
 		ms_div_by_4 = 0;
 		ms_Hz       = SAMPLE_CLOCK_HZ;	// desired MS output frequency
@@ -672,22 +675,13 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 			ms_Hz <<= 1;
 		}
 
-		// integer part .. valid MS values are 4, 6 and 8 to 2048
+		// integer part .. valid MS values are 4 and 8 to 2048
 		ms_a = pll_Hz / ms_Hz;
-		if (ms_a < 6)
+		if (ms_a < 8)
 		{	// fixed divide by 4 mode
 			ms_a  = 4;
 			ms_Hz = pll_Hz / ms_a;
-
 			ms_div_by_4 = 3;
-			ms_b        = 0;
-			ms_c        = 1;
-		}
-		else
-		if (ms_a < 8)
-		{
-			ms_a  = 6;
-			ms_Hz = pll_Hz / ms_a;
 		}
 		else
 		if (ms_a > 2048)
@@ -728,7 +722,10 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 			}
 
 			if (ms_b == 0 || ms_c == 0)
+			{
+				ms_b = 0;
 				ms_c = 1;
+			}
 		}
 
 		// recompute the MS output frequency
@@ -739,15 +736,14 @@ uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
 
 		si5351_data.clk_Hz[1] = ms_Hz;
 
-		{	// MS reg values
+		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
+		p = &si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)];
+		if ((ms_a & 1) == 0 && ms_b == 0)
+			*p |=   1u << 6;	// set bit
+		else
+			*p &= ~(1u << 6);	// clear bit
 
-			// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
-			p = &si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)];
-			*p &= ~(1u << 6);
-			*p |= ((ms_a & 1) == 0 && ms_b == 0) ? 1u << 6 : 0u;
-
-			pll_setBuffer(SI5351_REG_MULTISYNTH1_PARAMETERS_1 - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
-		}
+		pll_setBuffer(SI5351_REG_MULTISYNTH1_PARAMETERS_1 - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
 	}
 
 	// **********
@@ -1407,12 +1403,12 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 		case SI5351_REG_PLL_INPUT_SOURCE:
 			s  = " CLKIN_DIV-" + QString::number((value >> 6) & 0x03);
-			s += (value & 0x20) ? "  RES-5"          : "  res-5";
-			s += (value & 0x10) ? "  RES-4"          : "  res-4";
+			s += (value & 0x20) ? "  RESERVED"       : "  reserved";
+			s += (value & 0x10) ? "  RESERVED"       : "  reserved";
 			s += (value & 0x08) ? "  PLLB_SRC-CLKIN" : "  PLLB_SRC-XTAL";
 			s += (value & 0x04) ? "  PLLA_SRC-CLKIN" : "  PLLA_SRC-XTAL";
-			s += (value & 0x02) ? "  RES-1"          : "  res-1";
-			s += (value & 0x01) ? "  RES-0"          : "  res-0";
+			s += (value & 0x02) ? "  RESERVED"       : "  reserved";
+			s += (value & 0x01) ? "  RESERVED"       : "  reserved";
 			break;
 
 		case SI5351_REG_CLK0_CONTROL:
