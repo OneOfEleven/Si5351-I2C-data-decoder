@@ -466,9 +466,9 @@ void pll_setBuffer(const unsigned int reg, uint32_t pll_a, uint32_t pll_b, uint3
 	*p++ =  (p2 >>  0) & 0xff;
 }
 
-uint32_t pll_calcFrequency(const uint32_t freq_Hz, const unsigned int ms_index)
+uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const unsigned int ms_index)
 {
-	const uint32_t ref_Hz = SI5351_XTAL_HZ;
+//	const uint32_t ref_Hz = SI5351_XTAL_HZ;
 	uint8_t *p;
 	uint32_t pll_Hz       = 0;
 	uint32_t pll_a        = 0;
@@ -788,8 +788,12 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 
 	m_file_line_clicked = -1;
 
-	m_xtal_Hz          = 27000000.0;
-	XtalFreqEdit->Text = "27.000000";
+	{
+		String s;
+		m_xtal_Hz = SI5351_XTAL_HZ;
+		s.sprintf("%0.1f", (double)m_xtal_Hz / 1e6);
+		XtalFreqEdit->Text = s;
+	}
 
 	PLLALabel->Caption = "--";
 	PLLBLabel->Caption = "--";
@@ -2887,8 +2891,8 @@ void __fastcall TForm1::TestButtonClick(TObject *Sender)
 {
 	const uint32_t output_Hz = 201123456;
 
-	pll_calcFrequency(output_Hz,              0);
-	pll_calcFrequency(output_Hz - IF_FREQ_HZ, 2);
+	pll_calcFrequency(m_xtal_Hz, output_Hz,              0);
+	pll_calcFrequency(m_xtal_Hz, output_Hz - IF_FREQ_HZ, 2);
 
 	m_file_data.resize(0);
 
