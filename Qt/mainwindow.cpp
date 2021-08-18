@@ -1,8 +1,7 @@
 
 // Si5351 I2C data decoder
 //
-// Written by Cathy G6AMU
-// August 2021
+// Written by Cathy G6AMU August 2021
 
 #include <QDebug>
 #include <QFileDialog>
@@ -32,18 +31,18 @@
 
 // ****************************************************************
 
-#define IF_FREQ_HZ						10000
-#define SAMPLE_CLOCK_HZ					200000
+#define IF_FREQ_HZ                          10000
+#define SAMPLE_CLOCK_HZ                     200000
 
-#define SI5351_XTAL_HZ					27000000
+#define SI5351_XTAL_HZ                      27000000
 
-#define SI5351_PLL_VCO_MAX_HZ			900000000
-#define SI5351_PLL_VCO_MIN_HZ			600000000
+#define SI5351_PLL_VCO_MAX_HZ               900000000
+#define SI5351_PLL_VCO_MIN_HZ               600000000
 
-#define SI5351_MS_MAX_HZ				235000000
-#define SI5351_MS_MIN_HZ				500000
+#define SI5351_MS_MAX_HZ                    235000000
+#define SI5351_MS_MIN_HZ                    500000
 
-#define SI5351_MS_DIVBY4_HZ				150000000
+#define SI5351_MS_DIVBY4_HZ                 150000000
 
 typedef struct
 {
@@ -53,136 +52,44 @@ typedef struct
 	//QString name;
 } t_si5351_reg_list;
 
-typedef enum
-{
-	SI5351_REG_DEVICE_STATUS                     =   0,
-	SI5351_REG_INTERRUPT_STATUS_STICKY           =   1,
-	SI5351_REG_INTERRUPT_STATUS_MASK             =   2,
-
-	SI5351_REG_OUTPUT_ENABLE_CONTROL             =   3,
-	SI5351_REG_OEB_PIN_ENABLE_CONTROL            =   9,
-
-	SI5351_REG_PLL_INPUT_SOURCE                  =  15,
-
-	SI5351_REG_CLK0_CONTROL                      =  16,
-	SI5351_REG_CLK1_CONTROL                      =  17,
-	SI5351_REG_CLK2_CONTROL                      =  18,
-	SI5351_REG_CLK3_CONTROL                      =  19,
-	SI5351_REG_CLK4_CONTROL                      =  20,
-	SI5351_REG_CLK5_CONTROL                      =  21,
-	SI5351_REG_CLK6_CONTROL                      =  22,
-	SI5351_REG_CLK7_CONTROL                      =  23,
-
-	SI5351_REG_CLK3_0_DISABLE_STATE              =  24,
-	SI5351_REG_CLK7_4_DISABLE_STATE              =  25,
-
-	SI5351_REG_PLLA_PARAMETERS_0                 =  26,
-	SI5351_REG_PLLA_PARAMETERS_1                 =  27,
-	SI5351_REG_PLLA_PARAMETERS_2                 =  28,
-	SI5351_REG_PLLA_PARAMETERS_3                 =  29,
-	SI5351_REG_PLLA_PARAMETERS_4                 =  30,
-	SI5351_REG_PLLA_PARAMETERS_5                 =  31,
-	SI5351_REG_PLLA_PARAMETERS_6                 =  32,
-	SI5351_REG_PLLA_PARAMETERS_7                 =  33,
-
-	SI5351_REG_PLLB_PARAMETERS_0                 =  34,
-	SI5351_REG_PLLB_PARAMETERS_1                 =  35,
-	SI5351_REG_PLLB_PARAMETERS_2                 =  36,
-	SI5351_REG_PLLB_PARAMETERS_3                 =  37,
-	SI5351_REG_PLLB_PARAMETERS_4                 =  38,
-	SI5351_REG_PLLB_PARAMETERS_5                 =  39,
-	SI5351_REG_PLLB_PARAMETERS_6                 =  40,
-	SI5351_REG_PLLB_PARAMETERS_7                 =  41,
-
-	SI5351_REG_MULTISYNTH0_PARAMETERS_1          =  42,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_2          =  43,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_3          =  44,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_4          =  45,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_5          =  46,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_6          =  47,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_7          =  48,
-	SI5351_REG_MULTISYNTH0_PARAMETERS_8          =  49,
-
-	SI5351_REG_MULTISYNTH1_PARAMETERS_1          =  50,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_2          =  51,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_3          =  52,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_4          =  53,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_5          =  54,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_6          =  55,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_7          =  56,
-	SI5351_REG_MULTISYNTH1_PARAMETERS_8          =  57,
-
-	SI5351_REG_MULTISYNTH2_PARAMETERS_1          =  58,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_2          =  59,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_3          =  60,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_4          =  61,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_5          =  62,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_6          =  63,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_7          =  64,
-	SI5351_REG_MULTISYNTH2_PARAMETERS_8          =  65,
-
-	SI5351_REG_MULTISYNTH3_PARAMETERS_1          =  66,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_2          =  67,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_3          =  68,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_4          =  69,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_5          =  70,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_6          =  71,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_7          =  72,
-	SI5351_REG_MULTISYNTH3_PARAMETERS_8          =  73,
-
-	SI5351_REG_MULTISYNTH4_PARAMETERS_1          =  74,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_2          =  75,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_3          =  76,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_4          =  77,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_5          =  78,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_6          =  79,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_7          =  80,
-	SI5351_REG_MULTISYNTH4_PARAMETERS_8          =  81,
-
-	SI5351_REG_MULTISYNTH5_PARAMETERS_1          =  82,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_2          =  83,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_3          =  84,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_4          =  85,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_5          =  86,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_6          =  87,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_7          =  88,
-	SI5351_REG_MULTISYNTH5_PARAMETERS_8          =  89,
-
-	SI5351_REG_MULTISYNTH6_PARAMETERS            =  90,
-
-	SI5351_REG_MULTISYNTH7_PARAMETERS            =  91,
-
-	SI5351_REG_CLOCK_6_7_OUTPUT_DIVIDER          =  92,
-
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0      = 149,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_1      = 150,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2      = 151,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_3      = 152,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_4      = 153,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_5      = 154,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_6      = 155,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_7      = 156,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_8      = 157,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_9      = 158,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_10     = 159,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_11     = 160,
-	SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_12     = 161,
-
-	SI5351_REG_VCXO_PARAMTER_0                   = 162,
-	SI5351_REG_VCXO_PARAMTER_1                   = 163,
-	SI5351_REG_VCXO_PARAMTER_2                   = 164,
-
-	SI5351_REG_CLK0_INITIAL_PHASE_OFFSET         = 165,
-	SI5351_REG_CLK1_INITIAL_PHASE_OFFSET         = 166,
-	SI5351_REG_CLK2_INITIAL_PHASE_OFFSET         = 167,
-	SI5351_REG_CLK3_INITIAL_PHASE_OFFSET         = 168,
-	SI5351_REG_CLK4_INITIAL_PHASE_OFFSET         = 169,
-	SI5351_REG_CLK5_INITIAL_PHASE_OFFSET         = 170,
-
-	SI5351_REG_PLL_RESET                         = 177,
-	SI5351_REG_CRYSTAL_INTERNAL_LOAD_CAPACITANCE = 183,
-	SI5351_REG_FANOUT                            = 187
-} t_si5351_register;
+#define SI5351_REG_DEVICE_STATUS                      0
+#define SI5351_REG_INTERRUPT_STATUS_STICKY            1
+#define SI5351_REG_INTERRUPT_STATUS_MASK              2
+#define SI5351_REG_OUTPUT_ENABLE_CONTROL              3
+#define SI5351_REG_OEB_PIN_ENABLE_CONTROL             9
+#define SI5351_REG_PLL_INPUT_SOURCE                   15
+#define SI5351_REG_CLK0_CONTROL                       16
+#define SI5351_REG_CLK1_CONTROL                       17
+#define SI5351_REG_CLK2_CONTROL                       18
+#define SI5351_REG_CLK3_CONTROL                       19
+#define SI5351_REG_CLK4_CONTROL                       20
+#define SI5351_REG_CLK5_CONTROL                       21
+#define SI5351_REG_CLK6_CONTROL                       22
+#define SI5351_REG_CLK7_CONTROL                       23
+#define SI5351_REG_CLK3_0_DISABLE_STATE               24
+#define SI5351_REG_CLK7_4_DISABLE_STATE               25
+#define SI5351_REG_PLLA_PARAMETERS                    26	// 8 registers
+#define SI5351_REG_PLLB_PARAMETERS                    34	// 8 registers
+#define SI5351_REG_MS0_PARAMETERS                     42	// 8 registers
+#define SI5351_REG_MS1_PARAMETERS                     50	// 8 registers
+#define SI5351_REG_MS2_PARAMETERS                     58	// 8 registers
+#define SI5351_REG_MS3_PARAMETERS                     66	// 8 registers
+#define SI5351_REG_MS4_PARAMETERS                     74	// 8 registers
+#define SI5351_REG_MS5_PARAMETERS                     82	// 8 registers
+#define SI5351_REG_MS6_PARAMETERS                     90	// 1 register
+#define SI5351_REG_MS7_PARAMETERS                     91	// 1 register
+#define SI5351_REG_MS67_OUTPUT_DIVIDER                92	// 1 register
+#define SI5351_REG_SPREAD_SPECTRUM_PARAMETERS         149	// 13 registers
+#define SI5351_REG_VCXO_PARAMTERS                     162	// 3 registers
+#define SI5351_REG_CLK0_INITIAL_PHASE_OFFSET          165
+#define SI5351_REG_CLK1_INITIAL_PHASE_OFFSET          166
+#define SI5351_REG_CLK2_INITIAL_PHASE_OFFSET          167
+#define SI5351_REG_CLK3_INITIAL_PHASE_OFFSET          168
+#define SI5351_REG_CLK4_INITIAL_PHASE_OFFSET          169
+#define SI5351_REG_CLK5_INITIAL_PHASE_OFFSET          170
+#define SI5351_REG_PLL_RESET                          177
+#define SI5351_REG_CRYSTAL_INTERNAL_LOAD_CAPACITANCE  183
+#define SI5351_REG_FANOUT_ENABLE                      187
 
 const t_si5351_reg_list si5351_reg_list[] =
 {
@@ -207,101 +114,101 @@ const t_si5351_reg_list si5351_reg_list[] =
 	{SI5351_REG_CLK3_0_DISABLE_STATE             , 0x00, "CLK 3 to 0 DISABLE STATE         "},
 	{SI5351_REG_CLK7_4_DISABLE_STATE             , 0x00, "CLK 7 to 4 DISABLE STATE         "},
 
-	{SI5351_REG_PLLA_PARAMETERS_0                , 0x00, "PLL A PARAMETERS 0               "},
-	{SI5351_REG_PLLA_PARAMETERS_1                , 0x00, "PLL A PARAMETERS 1               "},
-	{SI5351_REG_PLLA_PARAMETERS_2                , 0x00, "PLL A PARAMETERS 2               "},
-	{SI5351_REG_PLLA_PARAMETERS_3                , 0x00, "PLL A PARAMETERS 3               "},
-	{SI5351_REG_PLLA_PARAMETERS_4                , 0x00, "PLL A PARAMETERS 4               "},
-	{SI5351_REG_PLLA_PARAMETERS_5                , 0x00, "PLL A PARAMETERS 5               "},
-	{SI5351_REG_PLLA_PARAMETERS_6                , 0x00, "PLL A PARAMETERS 6               "},
-	{SI5351_REG_PLLA_PARAMETERS_7                , 0x00, "PLL A PARAMETERS 7               "},
+	{SI5351_REG_PLLA_PARAMETERS + 0              , 0x00, "PLL A PARAMETERS 0               "},
+	{SI5351_REG_PLLA_PARAMETERS + 1              , 0x00, "PLL A PARAMETERS 1               "},
+	{SI5351_REG_PLLA_PARAMETERS + 2              , 0x00, "PLL A PARAMETERS 2               "},
+	{SI5351_REG_PLLA_PARAMETERS + 3              , 0x00, "PLL A PARAMETERS 3               "},
+	{SI5351_REG_PLLA_PARAMETERS + 4              , 0x00, "PLL A PARAMETERS 4               "},
+	{SI5351_REG_PLLA_PARAMETERS + 5              , 0x00, "PLL A PARAMETERS 5               "},
+	{SI5351_REG_PLLA_PARAMETERS + 6              , 0x00, "PLL A PARAMETERS 6               "},
+	{SI5351_REG_PLLA_PARAMETERS + 7              , 0x00, "PLL A PARAMETERS 7               "},
 
-	{SI5351_REG_PLLB_PARAMETERS_0                , 0x00, "PLL B PARAMETERS 0               "},
-	{SI5351_REG_PLLB_PARAMETERS_1                , 0x00, "PLL B PARAMETERS 1               "},
-	{SI5351_REG_PLLB_PARAMETERS_2                , 0x00, "PLL B PARAMETERS 2               "},
-	{SI5351_REG_PLLB_PARAMETERS_3                , 0x00, "PLL B PARAMETERS 3               "},
-	{SI5351_REG_PLLB_PARAMETERS_4                , 0x00, "PLL B PARAMETERS 4               "},
-	{SI5351_REG_PLLB_PARAMETERS_5                , 0x00, "PLL B PARAMETERS 5               "},
-	{SI5351_REG_PLLB_PARAMETERS_6                , 0x00, "PLL B PARAMETERS 6               "},
-	{SI5351_REG_PLLB_PARAMETERS_7                , 0x00, "PLL B PARAMETERS 7               "},
+	{SI5351_REG_PLLB_PARAMETERS + 0              , 0x00, "PLL B PARAMETERS 0               "},
+	{SI5351_REG_PLLB_PARAMETERS + 1              , 0x00, "PLL B PARAMETERS 1               "},
+	{SI5351_REG_PLLB_PARAMETERS + 2              , 0x00, "PLL B PARAMETERS 2               "},
+	{SI5351_REG_PLLB_PARAMETERS + 3              , 0x00, "PLL B PARAMETERS 3               "},
+	{SI5351_REG_PLLB_PARAMETERS + 4              , 0x00, "PLL B PARAMETERS 4               "},
+	{SI5351_REG_PLLB_PARAMETERS + 5              , 0x00, "PLL B PARAMETERS 5               "},
+	{SI5351_REG_PLLB_PARAMETERS + 6              , 0x00, "PLL B PARAMETERS 6               "},
+	{SI5351_REG_PLLB_PARAMETERS + 7              , 0x00, "PLL B PARAMETERS 7               "},
 
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_1         , 0x00, "MULTISYNTH 0 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_2         , 0x00, "MULTISYNTH 0 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_3         , 0x00, "MULTISYNTH 0 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_4         , 0x00, "MULTISYNTH 0 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_5         , 0x00, "MULTISYNTH 0 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_6         , 0x00, "MULTISYNTH 0 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_7         , 0x00, "MULTISYNTH 0 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH0_PARAMETERS_8         , 0x00, "MULTISYNTH 0 PARAMETERS 8        "},
+	{SI5351_REG_MS0_PARAMETERS + 0               , 0x00, "MS 0 PARAMETERS 0                "},
+	{SI5351_REG_MS0_PARAMETERS + 1               , 0x00, "MS 0 PARAMETERS 1                "},
+	{SI5351_REG_MS0_PARAMETERS + 2               , 0x00, "MS 0 PARAMETERS 2                "},
+	{SI5351_REG_MS0_PARAMETERS + 3               , 0x00, "MS 0 PARAMETERS 3                "},
+	{SI5351_REG_MS0_PARAMETERS + 4               , 0x00, "MS 0 PARAMETERS 4                "},
+	{SI5351_REG_MS0_PARAMETERS + 5               , 0x00, "MS 0 PARAMETERS 5                "},
+	{SI5351_REG_MS0_PARAMETERS + 6               , 0x00, "MS 0 PARAMETERS 6                "},
+	{SI5351_REG_MS0_PARAMETERS + 7               , 0x00, "MS 0 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_1         , 0x00, "MULTISYNTH 1 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_2         , 0x00, "MULTISYNTH 1 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_3         , 0x00, "MULTISYNTH 1 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_4         , 0x00, "MULTISYNTH 1 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_5         , 0x00, "MULTISYNTH 1 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_6         , 0x00, "MULTISYNTH 1 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_7         , 0x00, "MULTISYNTH 1 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH1_PARAMETERS_8         , 0x00, "MULTISYNTH 1 PARAMETERS 8        "},
+	{SI5351_REG_MS1_PARAMETERS + 0               , 0x00, "MS 1 PARAMETERS 0                "},
+	{SI5351_REG_MS1_PARAMETERS + 1               , 0x00, "MS 1 PARAMETERS 1                "},
+	{SI5351_REG_MS1_PARAMETERS + 2               , 0x00, "MS 1 PARAMETERS 2                "},
+	{SI5351_REG_MS1_PARAMETERS + 3               , 0x00, "MS 1 PARAMETERS 3                "},
+	{SI5351_REG_MS1_PARAMETERS + 4               , 0x00, "MS 1 PARAMETERS 4                "},
+	{SI5351_REG_MS1_PARAMETERS + 5               , 0x00, "MS 1 PARAMETERS 5                "},
+	{SI5351_REG_MS1_PARAMETERS + 6               , 0x00, "MS 1 PARAMETERS 6                "},
+	{SI5351_REG_MS1_PARAMETERS + 7               , 0x00, "MS 1 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_1         , 0x00, "MULTISYNTH 2 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_2         , 0x00, "MULTISYNTH 2 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_3         , 0x00, "MULTISYNTH 2 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_4         , 0x00, "MULTISYNTH 2 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_5         , 0x00, "MULTISYNTH 2 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_6         , 0x00, "MULTISYNTH 2 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_7         , 0x00, "MULTISYNTH 2 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH2_PARAMETERS_8         , 0x00, "MULTISYNTH 2 PARAMETERS 8        "},
+	{SI5351_REG_MS2_PARAMETERS + 0               , 0x00, "MS 2 PARAMETERS 0                "},
+	{SI5351_REG_MS2_PARAMETERS + 1               , 0x00, "MS 2 PARAMETERS 1                "},
+	{SI5351_REG_MS2_PARAMETERS + 2               , 0x00, "MS 2 PARAMETERS 2                "},
+	{SI5351_REG_MS2_PARAMETERS + 3               , 0x00, "MS 2 PARAMETERS 3                "},
+	{SI5351_REG_MS2_PARAMETERS + 4               , 0x00, "MS 2 PARAMETERS 4                "},
+	{SI5351_REG_MS2_PARAMETERS + 5               , 0x00, "MS 2 PARAMETERS 5                "},
+	{SI5351_REG_MS2_PARAMETERS + 6               , 0x00, "MS 2 PARAMETERS 6                "},
+	{SI5351_REG_MS2_PARAMETERS + 7               , 0x00, "MS 2 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_1         , 0x00, "MULTISYNTH 3 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_2         , 0x00, "MULTISYNTH 3 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_3         , 0x00, "MULTISYNTH 3 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_4         , 0x00, "MULTISYNTH 3 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_5         , 0x00, "MULTISYNTH 3 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_6         , 0x00, "MULTISYNTH 3 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_7         , 0x00, "MULTISYNTH 3 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH3_PARAMETERS_8         , 0x00, "MULTISYNTH 3 PARAMETERS 8        "},
+	{SI5351_REG_MS3_PARAMETERS + 0               , 0x00, "MS 3 PARAMETERS 0                "},
+	{SI5351_REG_MS3_PARAMETERS + 1               , 0x00, "MS 3 PARAMETERS 1                "},
+	{SI5351_REG_MS3_PARAMETERS + 2               , 0x00, "MS 3 PARAMETERS 2                "},
+	{SI5351_REG_MS3_PARAMETERS + 3               , 0x00, "MS 3 PARAMETERS 3                "},
+	{SI5351_REG_MS3_PARAMETERS + 4               , 0x00, "MS 3 PARAMETERS 4                "},
+	{SI5351_REG_MS3_PARAMETERS + 5               , 0x00, "MS 3 PARAMETERS 5                "},
+	{SI5351_REG_MS3_PARAMETERS + 6               , 0x00, "MS 3 PARAMETERS 6                "},
+	{SI5351_REG_MS3_PARAMETERS + 7               , 0x00, "MS 3 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_1         , 0x00, "MULTISYNTH 4 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_2         , 0x00, "MULTISYNTH 4 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_3         , 0x00, "MULTISYNTH 4 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_4         , 0x00, "MULTISYNTH 4 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_5         , 0x00, "MULTISYNTH 4 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_6         , 0x00, "MULTISYNTH 4 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_7         , 0x00, "MULTISYNTH 4 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH4_PARAMETERS_8         , 0x00, "MULTISYNTH 4 PARAMETERS 8        "},
+	{SI5351_REG_MS4_PARAMETERS + 0               , 0x00, "MS 4 PARAMETERS 0                "},
+	{SI5351_REG_MS4_PARAMETERS + 1               , 0x00, "MS 4 PARAMETERS 1                "},
+	{SI5351_REG_MS4_PARAMETERS + 2               , 0x00, "MS 4 PARAMETERS 2                "},
+	{SI5351_REG_MS4_PARAMETERS + 3               , 0x00, "MS 4 PARAMETERS 3                "},
+	{SI5351_REG_MS4_PARAMETERS + 4               , 0x00, "MS 4 PARAMETERS 4                "},
+	{SI5351_REG_MS4_PARAMETERS + 5               , 0x00, "MS 4 PARAMETERS 5                "},
+	{SI5351_REG_MS4_PARAMETERS + 6               , 0x00, "MS 4 PARAMETERS 6                "},
+	{SI5351_REG_MS4_PARAMETERS + 7               , 0x00, "MS 4 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_1         , 0x00, "MULTISYNTH 5 PARAMETERS 1        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_2         , 0x00, "MULTISYNTH 5 PARAMETERS 2        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_3         , 0x00, "MULTISYNTH 5 PARAMETERS 3        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_4         , 0x00, "MULTISYNTH 5 PARAMETERS 4        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_5         , 0x00, "MULTISYNTH 5 PARAMETERS 5        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_6         , 0x00, "MULTISYNTH 5 PARAMETERS 6        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_7         , 0x00, "MULTISYNTH 5 PARAMETERS 7        "},
-	{SI5351_REG_MULTISYNTH5_PARAMETERS_8         , 0x00, "MULTISYNTH 5 PARAMETERS 8        "},
+	{SI5351_REG_MS5_PARAMETERS + 0               , 0x00, "MS 5 PARAMETERS 0                "},
+	{SI5351_REG_MS5_PARAMETERS + 1               , 0x00, "MS 5 PARAMETERS 1                "},
+	{SI5351_REG_MS5_PARAMETERS + 2               , 0x00, "MS 5 PARAMETERS 2                "},
+	{SI5351_REG_MS5_PARAMETERS + 3               , 0x00, "MS 5 PARAMETERS 3                "},
+	{SI5351_REG_MS5_PARAMETERS + 4               , 0x00, "MS 5 PARAMETERS 4                "},
+	{SI5351_REG_MS5_PARAMETERS + 5               , 0x00, "MS 5 PARAMETERS 5                "},
+	{SI5351_REG_MS5_PARAMETERS + 6               , 0x00, "MS 5 PARAMETERS 6                "},
+	{SI5351_REG_MS5_PARAMETERS + 7               , 0x00, "MS 5 PARAMETERS 7                "},
 
-	{SI5351_REG_MULTISYNTH6_PARAMETERS           , 0x00, "MULTISYNTH 6 PARAMETERS          "},
+	{SI5351_REG_MS6_PARAMETERS                   , 0x00, "MS 6 PARAMETERS                  "},
 
-	{SI5351_REG_MULTISYNTH7_PARAMETERS           , 0x00, "MULTISYNTH 7 PARAMETERS          "},
+	{SI5351_REG_MS7_PARAMETERS                   , 0x00, "MS 7 PARAMETERS                  "},
 
-	{SI5351_REG_CLOCK_6_7_OUTPUT_DIVIDER         , 0x00, "CLOCK 6 & 7 OUTPUT DIVIDER       "},
+	{SI5351_REG_MS67_OUTPUT_DIVIDER              , 0x00, "CLOCK 6 & 7 OUTPUT DIVIDER       "},
 
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0     , 0x00, "SPREAD SPECTRUM PARAMETERS 0     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_1     , 0x00, "SPREAD SPECTRUM PARAMETERS 1     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2     , 0x00, "SPREAD SPECTRUM PARAMETERS 2     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_3     , 0x00, "SPREAD SPECTRUM PARAMETERS 3     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_4     , 0x00, "SPREAD SPECTRUM PARAMETERS 4     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_5     , 0x00, "SPREAD SPECTRUM PARAMETERS 5     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_6     , 0x00, "SPREAD SPECTRUM PARAMETERS 6     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_7     , 0x00, "SPREAD SPECTRUM PARAMETERS 7     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_8     , 0x00, "SPREAD SPECTRUM PARAMETERS 8     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_9     , 0x00, "SPREAD SPECTRUM PARAMETERS 9     "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_10    , 0x00, "SPREAD SPECTRUM PARAMETERS 10    "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_11    , 0x00, "SPREAD SPECTRUM PARAMETERS 11    "},
-	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_12    , 0x00, "SPREAD SPECTRUM PARAMETERS 12    "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 0   , 0x00, "SPREAD SPECTRUM PARAMETERS 0     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 1   , 0x00, "SPREAD SPECTRUM PARAMETERS 1     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 2   , 0x00, "SPREAD SPECTRUM PARAMETERS 2     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 3   , 0x00, "SPREAD SPECTRUM PARAMETERS 3     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 4   , 0x00, "SPREAD SPECTRUM PARAMETERS 4     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 5   , 0x00, "SPREAD SPECTRUM PARAMETERS 5     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 6   , 0x00, "SPREAD SPECTRUM PARAMETERS 6     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 7   , 0x00, "SPREAD SPECTRUM PARAMETERS 7     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 8   , 0x00, "SPREAD SPECTRUM PARAMETERS 8     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 9   , 0x00, "SPREAD SPECTRUM PARAMETERS 9     "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 10  , 0x00, "SPREAD SPECTRUM PARAMETERS 10    "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 11  , 0x00, "SPREAD SPECTRUM PARAMETERS 11    "},
+	{SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 12  , 0x00, "SPREAD SPECTRUM PARAMETERS 12    "},
 
-	{SI5351_REG_VCXO_PARAMTER_0                  , 0x00, "VCXO PARAMTER BITS  0 to  7"      },
-	{SI5351_REG_VCXO_PARAMTER_1                  , 0x00, "VCXO PARAMTER BITS  8 to 15"      },
-	{SI5351_REG_VCXO_PARAMTER_2                  , 0x00, "VCXO PARAMTER BITS 16 to 21"      },
+	{SI5351_REG_VCXO_PARAMTERS + 0               , 0x00, "VCXO PARAMTER BITS  0 to  7"      },
+	{SI5351_REG_VCXO_PARAMTERS + 1               , 0x00, "VCXO PARAMTER BITS  8 to 15"      },
+	{SI5351_REG_VCXO_PARAMTERS + 2               , 0x00, "VCXO PARAMTER BITS 16 to 21"      },
 
 	{SI5351_REG_CLK0_INITIAL_PHASE_OFFSET        , 0x00, "CLK 0 INITIAL PHASE OFFSET       "},
 	{SI5351_REG_CLK1_INITIAL_PHASE_OFFSET        , 0x00, "CLK 1 INITIAL PHASE OFFSET       "},
@@ -312,62 +219,8 @@ const t_si5351_reg_list si5351_reg_list[] =
 
 	{SI5351_REG_PLL_RESET                        , 0x00, "PLL RESET                        "},
 	{SI5351_REG_CRYSTAL_INTERNAL_LOAD_CAPACITANCE, 0xC0, "CRYSTAL INTERNAL LOAD CAPACITANCE"},
-	{SI5351_REG_FANOUT                           , 0x00, "FAN OUT                          "}
+	{SI5351_REG_FANOUT_ENABLE                    , 0x00, "FAN OUT ENABLE                   "}
 };
-
-typedef enum
-{
-	SI5351_CLK_NONE = -1,
-	SI5351_CLK_0    =  0,
-	SI5351_CLK_1    =  1,
-	SI5351_CLK_2    =  2
-} si5351Clk_t;
-
-typedef enum
-{
-	SI5351_PLL_NONE = -1,
-	SI5351_PLL_A    =  0,
-	SI5351_PLL_B    =  1
-} si5351PLL_t;
-
-typedef enum
-{
-	SI5351_CRYSTAL_LOAD_NONE = -1,
-	//SI5351_CRYSTAL_LOAD_0PF  =  0,
-	SI5351_CRYSTAL_LOAD_6PF  =  1,
-	SI5351_CRYSTAL_LOAD_8PF  =  2,
-	SI5351_CRYSTAL_LOAD_10PF =  3
-} si5351CrystalLoad_t;
-
-typedef enum
-{
-	SI5351_MULTISYNTH_DIV_NONE = -1,
-	SI5351_MULTISYNTH_DIV_4    =  4,
-	SI5351_MULTISYNTH_DIV_6    =  6,
-	SI5351_MULTISYNTH_DIV_8    =  8
-} si5351MultisynthDiv_t;
-
-typedef enum
-{
-	SI5351_OUT_DRIVE_NONE = -1,
-	SI5351_OUT_DRIVE_2MA  =  0,
-	SI5351_OUT_DRIVE_4MA  =  1,
-	SI5351_OUT_DRIVE_6MA  =  2,
-	SI5351_OUT_DRIVE_8MA  =  3
-} si5351OutDrive_t;
-
-typedef enum
-{
-	SI5351_R_DIV_NONE = -1,
-	SI5351_R_DIV_1    =  0,
-	SI5351_R_DIV_2    =  1,
-	SI5351_R_DIV_4    =  2,
-	SI5351_R_DIV_8    =  3,
-	SI5351_R_DIV_16   =  4,
-	SI5351_R_DIV_32   =  5,
-	SI5351_R_DIV_64   =  6,
-	SI5351_R_DIV_128  =  7
-} si5351RDiv_t;
 
 // ****************************************************************
 // test our Si5351 routines
@@ -376,19 +229,20 @@ struct
 {
 	uint32_t pll_Hz[2];
 	uint32_t clk_Hz[3];
+
 	// CLK, PLL-A/B and MS-0/1/2 register values
-	// start byte is the Si5352 first address (PLL-A)
+	// start byte is the Si5352 first address (PLL source)
 	uint8_t si5351_buffer[1 + 1 + 8 + 2 + (8 * 2) + (8 * 3)];
 } si5351_data;
 
-uint32_t pll_findVCOfreq(const uint32_t ref_Hz, const uint32_t ms_Hz)
+uint32_t pll_find_VCO_freq(const uint32_t ref_Hz, const uint32_t ms_Hz)
 {	// try to find an even integer PLL VCO frequency - this would produce the minimum level of output jitter
 
 	#if 1
 		const uint32_t vco_lo = SI5351_PLL_VCO_MIN_HZ;
 		const uint32_t vco_hi = SI5351_PLL_VCO_MAX_HZ;
 	#else
-		// use the PLL min/max limits we previously tested for
+		// use the PLL frequency min/max limits we previously tested for
 		const uint32_t vco_lo = (min_pll_Hz == 0) ? SI5351_PLL_VCO_MIN_HZ ? (uint64_t)min_pll_Hz;
 		const uint32_t vco_hi = (max_pll_Hz == 0) ? SI5351_PLL_VCO_MAX_HZ ? (uint64_t)max_pll_Hz;
 	#endif
@@ -450,7 +304,7 @@ uint32_t pll_findVCOfreq(const uint32_t ref_Hz, const uint32_t ms_Hz)
 	return highest_Hz;
 }
 
-void pll_setBuffer(const unsigned int reg, uint32_t pll_a, uint32_t pll_b, uint32_t pll_c, const uint8_t r_div, const uint8_t div_by_4)
+void pll_set_buffer(const unsigned int reg, uint32_t pll_a, uint32_t pll_b, uint32_t pll_c, const uint8_t r_div, const uint8_t div_by_4)
 {
 	pll_a <<= 7;
 	pll_b <<= 7;
@@ -470,10 +324,177 @@ void pll_setBuffer(const unsigned int reg, uint32_t pll_a, uint32_t pll_b, uint3
 	*p++ =  (p2 >>  0) & 0xff;
 }
 
+uint32_t pll_calc_pll(const uint32_t ref_Hz, uint32_t pll_Hz, uint32_t *pll_a, uint32_t *pll_b, uint32_t *pll_c)
+{
+	// compute the PLL register values
+	// ref_Hz * (a + (b / c)) = pll_Hz
+
+	uint32_t a = 0;
+	uint32_t b = 0;
+	uint32_t c = 1;
+
+	*pll_a = a;
+	*pll_b = b;
+	*pll_c = c;
+
+	if (ref_Hz == 0 || pll_Hz == 0)
+		return 0;
+
+	a = pll_Hz / ref_Hz;     // integer part
+	b = pll_Hz % ref_Hz;     // fractional part
+	c = ref_Hz;              //    "         "
+
+	if (a < 15)
+	{
+		a = 15;
+		b = 0;
+		c = 1;
+	}
+	else
+	if (a > 90)
+	{
+		a = 90;
+		b = 0;
+		c = 1;
+	}
+	else
+	{	// optimise the fractional register values
+		if (b && c)
+		{	// compute the GCD (Greatest Common Divisor)
+			uint32_t bb = b;
+			uint32_t cc = c;
+			while (cc)
+			{
+				bb %= cc;
+				if (!bb)
+				{
+					bb = cc;
+					break;
+				}
+				cc %= bb;
+			}
+			const uint32_t gcd = bb;
+			if (gcd > 1)
+			{
+				b /= gcd;
+				c /= gcd;
+			}
+		}
+
+		if (b == 0 || c == 0)
+		{
+			b = 0;
+			c = 1;
+		}
+	}
+
+	// recompute the final PLL VCO frequency
+	// pll_Hz = ref_Hz * (a + (b / c))
+	pll_Hz = (ref_Hz * a) + (((uint64_t)ref_Hz * b) / c);
+
+	*pll_a = a;
+	*pll_b = b;
+	*pll_c = c;
+
+	return pll_Hz;
+}
+
+uint32_t pll_calc_ms(const uint32_t pll_Hz, uint32_t ms_Hz, uint32_t *ms_a, uint32_t *ms_b, uint32_t *ms_c, uint8_t *ms_r_div, uint8_t *ms_div_by_4)
+{
+	uint32_t a       = 0;
+	uint32_t b       = 0;
+	uint32_t c       = 1;
+	uint8_t r_div    = 0;
+	uint8_t div_by_4 = 0;
+
+	*ms_a        = a;
+	*ms_b        = b;
+	*ms_c        = c;
+	*ms_r_div    = r_div;
+	*ms_div_by_4 = div_by_4;
+
+	if (pll_Hz == 0 || ms_Hz == 0)
+		return 0;
+
+	// compute the required MS output R-divider value (1, 2, 4, 8, 16, 32, 64 or 128)
+	while (r_div < 7 && ms_Hz < SI5351_MS_MIN_HZ)
+	{
+		r_div++;
+		ms_Hz <<= 1;
+	}
+
+	// compute the integer part .. valid MS values are 4, 6 and 8 to 2048
+	a = pll_Hz / ms_Hz;
+	if (a < 8)
+	{	// fixed divide-by-4 mode
+		a = 4;
+		div_by_4 = 3;
+	}
+	else
+	if (a > 2048)
+	{
+		a = 2048;
+	}
+	else
+	{	// compute the fractional part
+
+		//const uint32_t denom = 10000
+		const uint32_t denom = (1u << 20) - 1;
+		b = ((uint64_t)(pll_Hz % ms_Hz) * denom) / ms_Hz;
+		c = (b > 0) ? denom : 1;
+
+		// optimize the fractional register values
+		if (b && c)
+		{	// compute the GCD (Greatest Common Divisor)
+			uint32_t bb = b;
+			uint32_t cc = c;
+			while (cc)
+			{
+				bb %= cc;
+				if (!bb)
+				{
+					bb = cc;
+					break;
+				}
+				cc %= bb;
+			}
+			const uint32_t gcd = bb;
+
+			if (gcd > 1)
+			{	// scale down the fractional reg values
+				b /= gcd;
+				c /= gcd;
+			}
+		}
+
+		if (b == 0 || c == 0)
+		{
+			b = 0;
+			c = 1;
+		}
+	}
+
+	// recompute the MS output frequency
+	// ms_Hz = pll_Hz / (a + (b / c))
+	ms_Hz = ((uint64_t)pll_Hz << 20) / (((uint64_t)a << 20) + (((uint64_t)b << 20) / c));
+	//ms_Hz = (pll_Hz / a) - (((uint64_t)pll_Hz * b) / c);	// test me
+	ms_Hz >>= r_div;
+
+	//if (div_by_4 == 3)
+	//	a = 0;
+
+	*ms_a        = a;
+	*ms_b        = b;
+	*ms_c        = c;
+	*ms_r_div    = r_div;
+	*ms_div_by_4 = div_by_4;
+
+	return ms_Hz;
+}
+
 uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const unsigned int ms_index)
 {
 //	const uint32_t ref_Hz = SI5351_XTAL_HZ;
-	uint8_t *p;
 	uint32_t pll_Hz       = 0;
 	uint32_t pll_a        = 0;
 	uint32_t pll_b        = 0;
@@ -484,8 +505,9 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 	uint8_t  ms_r_div     = 0;
 	uint8_t  ms_div_by_4  = 0;
 	uint32_t ms_Hz        = freq_Hz;
+	uint8_t *p;
 
-	if (ms_index >= 3)
+	if (ms_index >= 3 || ms_index == 1)
 		return 0;
 
 	const uint8_t pll_index = (ms_index <= 1) ? 0 : 1;	// PLL-A or PLL-B
@@ -505,7 +527,7 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 	}
 
 	// PLL VCO frequency
-	pll_Hz = (ms_index == 1 && si5351_data.pll_Hz[0] > 0) ? si5351_data.pll_Hz[0] : pll_findVCOfreq(ref_Hz, ms_Hz);
+	pll_Hz = pll_find_VCO_freq(ref_Hz, ms_Hz);
 
 	if (pll_Hz > 0)
 	{	// found a preferred PLL VCO frequency to use
@@ -520,86 +542,40 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 	}
 
 	// valid MS divider value is 4 or 8 to 2048
-	if (ms_a <    8) ms_a = 4;
-	else
-	if (ms_a > 2048) ms_a = 2048;
-
-	//ms_b = 0;
-	//ms_c = 1;
-
-	if (ms_a == 4)
-	{	// fixed divide by 4 output mode
+	if (ms_a < 8)
+	{	// fixed divide-by-4 output mode
+		ms_a = 4;
 		ms_div_by_4 = 3;
-		//ms_b        = 0;
-		//ms_c        = 1;
 	}
-
-	if (ms_index != 1)
+	else
+	if (ms_a > 2048)
 	{
-		// compute the actual PLL VCO frequency
-		pll_Hz = (ms_Hz * ms_a) + (((uint64_t)ms_Hz * ms_b) / ms_c);
-
-		// **********
-		// compute the PLL register values
-		// ref_Hz * (a + (b / c)) = pll_Hz
-
-		pll_a = pll_Hz / ref_Hz;     // integer part
-		pll_b = pll_Hz % ref_Hz;     // fractional part
-		pll_c = ref_Hz;              //    "         "
-
-		if (pll_a < 15) pll_a = 15;
-		else
-		if (pll_a > 90) pll_a = 90;
-
-		// optimise the fractional register values
-		if (pll_b && pll_c)
-		{	// compute the GCD (Greatest Common Divisor)
-			uint32_t b = pll_b;
-			uint32_t c = pll_c;
-			while (c)
-			{
-				b %= c;
-				if (!b)
-				{
-					b = c;
-					break;
-				}
-				c %= b;
-			}
-			const uint32_t gcd = b;
-			if (gcd > 1)
-			{
-				pll_b /= gcd;
-				pll_c /= gcd;
-			}
-		}
-
-		if (pll_b == 0 || pll_c == 0)
-		{
-			pll_b = 0;
-			pll_c = 1;
-		}
-
-		// **********
-
-		// recompute the final PLL VCO frequency
-		// pll_Hz = ref_Hz * (a + (b / c))
-		pll_Hz = (ref_Hz * pll_a) + (((uint64_t)ref_Hz * pll_b) / pll_c);
+		ms_a = 2048;
 	}
+
+	// compute the actual PLL VCO frequency
+	pll_Hz = (ms_Hz * ms_a) + (((uint64_t)ms_Hz * ms_b) / ms_c);
+
+	// compute the PLL reg values
+	pll_Hz = pll_calc_pll(ref_Hz, pll_Hz, &pll_a, &pll_b, &pll_c);
 
 	// recompute the MS output frequency
 	// ms_Hz = pll_Hz / (a + (b / c))
 	ms_Hz   = ((uint64_t)pll_Hz << 20) / (((uint64_t)ms_a << 20) + (((uint64_t)ms_b << 20) / ms_c));
-	//ms_Hz = (pll_Hz / ms_a) - ((pll_Hz * ms_b) / ms_c);	// test me
+	//ms_Hz = (pll_Hz / ms_a) - (((uint64_t)pll_Hz * ms_b) / ms_c);	// test me
 	ms_Hz >>= ms_r_div;
+
+	//if (ms_div_by_4 == 3)
+	//	ms_a = 0;
 
 	// **********
 	// save the results
 
+	// the first Si5351 register the buffer uses
 	const unsigned int start_reg = SI5351_REG_PLL_INPUT_SOURCE;
 
 	if (ms_index == 0)
-	{
+	{	// clear the settings
 		memset(&si5351_data.pll_Hz[0], 0, sizeof(&si5351_data.pll_Hz));
 		memset(&si5351_data.clk_Hz[0], 0, sizeof(&si5351_data.clk_Hz));
 		memset(&si5351_data.si5351_buffer[0], 0, sizeof(&si5351_data.si5351_buffer));
@@ -608,7 +584,8 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 	si5351_data.pll_Hz[pll_index] = pll_Hz;
 	si5351_data.clk_Hz[ ms_index] = ms_Hz;
 
-	si5351_data.si5351_buffer[0] = start_reg;	// start byte is the initial register address
+	// start byte is the initial register address
+	si5351_data.si5351_buffer[0] = start_reg;
 
 	// reg-15 .. CLKIN_DIV = /1, PLL-B_SRC = XTAL, PLL-A_SRC = XTAL
 	p = &si5351_data.si5351_buffer[SI5351_REG_PLL_INPUT_SOURCE - (start_reg - 1)];
@@ -618,15 +595,15 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 	if (ms_index == 0)
 		si5351_data.si5351_buffer[SI5351_REG_CLK0_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (0u << 5) | (0u << 4) | (3u << 2) | (3u << 0);
 
-	// CLK-1 .. Powered UP, Integer mode, PLL-A as MS1 source, Not inverted, MS1 as CLK-1 source, 2mA CLK output current
+	// CLK-1 .. Powered UP, Integer mode, PLL-A as MS1 source, Not inverted, MS1 as CLK-1 source, 8mA CLK output current
 	if (ms_index <= 1)
-		si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (0u << 5) | (0u << 4) | (3u << 2) | (0u << 0);
+		si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (0u << 5) | (0u << 4) | (3u << 2) | (3u << 0);
 
 	// CLK-2 .. Powered UP, Integer mode, PLL-B as MS2 source, Not inverted, MS2 as CLK-2 source, 8mA CLK output current
 	if (ms_index == 2)
 		si5351_data.si5351_buffer[SI5351_REG_CLK2_CONTROL - (start_reg - 1)] = (0u << 7) | (1u << 6) | (1u << 5) | (0u << 4) | (3u << 2) | (3u << 0);
 
-	// unused disabled stated = HIGH_Z, used disab;ed state = LOW
+	// unused clocks disabled state = HIGH_Z, used clocks disabled state = LOW
 	p = &si5351_data.si5351_buffer[SI5351_REG_CLK3_0_DISABLE_STATE - (start_reg - 1)];
 	*p++ = (2u << 6) | (0u << 4) | (0u << 2) | (0u << 0);
 	*p++ = (2u << 6) | (2u << 4) | (2u << 2) | (2u << 0);
@@ -641,7 +618,7 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 		else
 			*p &= ~(1u << 6);	// FRAC mode
 
-		pll_setBuffer(SI5351_REG_PLLA_PARAMETERS_0 + (8 * pll_index) - (start_reg - 1), pll_a, pll_b, pll_c, 0, 0);
+		pll_set_buffer(SI5351_REG_PLLA_PARAMETERS + (8 * pll_index) - (start_reg - 1), pll_a, pll_b, pll_c, 0, 0);
 	}
 
 	if (ms_index <= 5)
@@ -650,11 +627,11 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
 		p = &si5351_data.si5351_buffer[SI5351_REG_CLK0_CONTROL + ms_index - (start_reg - 1)];
 		if ((ms_a & 1) == 0 && ms_b == 0)
-			*p |=   1u << 6;	// set bit
+			*p |=   1u << 6;	// INT mode
 		else
-			*p &= ~(1u << 6);	// clear bit
+			*p &= ~(1u << 6);	// FRAC mode
 
-		pll_setBuffer(SI5351_REG_MULTISYNTH0_PARAMETERS_1 + (8 * ms_index) - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
+		pll_set_buffer(SI5351_REG_MS0_PARAMETERS + (8 * ms_index) - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
 	}
 
 	if (ms_index <= 1)
@@ -662,88 +639,18 @@ uint32_t pll_calcFrequency(const uint32_t ref_Hz, const uint32_t freq_Hz, const 
 
 		pll_Hz = si5351_data.pll_Hz[0];	// PLL-A frequency
 
-		ms_b        = 0;
-		ms_c        = 1;
-		ms_r_div    = 0;
-		ms_div_by_4 = 0;
-		ms_Hz       = SAMPLE_CLOCK_HZ;	// desired MS output frequency
-
-		// compute the required output R-divider value (1, 2, 4, 8, 16, 32, 64 or 128)
-		while (ms_r_div < 7 && ms_Hz < SI5351_MS_MIN_HZ)
-		{
-			ms_r_div++;
-			ms_Hz <<= 1;
-		}
-
-		// integer part .. valid MS values are 4 and 8 to 2048
-		ms_a = pll_Hz / ms_Hz;
-		if (ms_a < 8)
-		{	// fixed divide by 4 mode
-			ms_a  = 4;
-			ms_Hz = pll_Hz / ms_a;
-			ms_div_by_4 = 3;
-		}
-		else
-		if (ms_a > 2048)
-		{
-			ms_a  = 2048;
-			ms_Hz = pll_Hz / ms_a;
-		}
-
-		if (ms_a > 4)
-		{	// compute the fractional part
-
-			//const uint32_t denom = 10000
-			const uint32_t denom = (1u << 20) - 1;
-			ms_b = ((uint64_t)(pll_Hz % ms_Hz) * denom) / ms_Hz;
-			ms_c = (ms_b > 0) ? denom : 1;
-
-			// optimise the fractional register values
-			if (ms_b && ms_c)
-			{	// compute the GCD (Greatest Common Divisor)
-				uint32_t b = ms_b;
-				uint32_t c = ms_c;
-				while (c)
-				{
-					b %= c;
-					if (!b)
-					{
-						b = c;
-						break;
-					}
-					c %= b;
-				}
-				const uint32_t gcd = b;
-				if (gcd > 1)
-				{	// scale down the fractional reg values
-					ms_b /= gcd;
-					ms_c /= gcd;
-				}
-			}
-
-			if (ms_b == 0 || ms_c == 0)
-			{
-				ms_b = 0;
-				ms_c = 1;
-			}
-		}
-
-		// recompute the MS output frequency
-		// ms_Hz = pll_Hz / (a + (b / c))
-		ms_Hz = ((uint64_t)pll_Hz << 20) / (((uint64_t)ms_a << 20) + (((uint64_t)ms_b << 20) / ms_c));
-		//ms_Hz = (pll_Hz / ms_a) - ((pll_Hz * ms_b) / ms_c);	// test me
-		ms_Hz >>= ms_r_div;
+		ms_Hz = pll_calc_ms(pll_Hz, SAMPLE_CLOCK_HZ, &ms_a, &ms_b, &ms_c, &ms_r_div, &ms_div_by_4);
 
 		si5351_data.clk_Hz[1] = ms_Hz;
 
 		// if "a + (b / c)" is an even number, then INTEGER mode can be enabled - helps to reduce jitter
 		p = &si5351_data.si5351_buffer[SI5351_REG_CLK1_CONTROL - (start_reg - 1)];
 		if ((ms_a & 1) == 0 && ms_b == 0)
-			*p |=   1u << 6;	// set bit
+			*p |=   1u << 6;	// INT mode
 		else
-			*p &= ~(1u << 6);	// clear bit
+			*p &= ~(1u << 6);	// FRAC mode
 
-		pll_setBuffer(SI5351_REG_MULTISYNTH1_PARAMETERS_1 - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
+		pll_set_buffer(SI5351_REG_MS1_PARAMETERS - (start_reg - 1), ms_a, ms_b, ms_c, ms_r_div, ms_div_by_4);
 	}
 
 	// **********
@@ -1677,67 +1584,67 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 			}
 			break;
 
-		case SI5351_REG_PLLA_PARAMETERS_0:
+		case SI5351_REG_PLLA_PARAMETERS + 0:
 			s = " MSNA_P3[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_1:
+		case SI5351_REG_PLLA_PARAMETERS + 1:
 			s = " MSNA_P3[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_2:
+		case SI5351_REG_PLLA_PARAMETERS + 2:
 			s  = " Reserved-" + QString::number((value >> 2) & 0x03);
 			s += "  MSNA_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_3:
+		case SI5351_REG_PLLA_PARAMETERS + 3:
 			s = " MSNA_P1[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_4:
+		case SI5351_REG_PLLA_PARAMETERS + 4:
 			s = " MSNA_P1[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_5:
+		case SI5351_REG_PLLA_PARAMETERS + 5:
 			s  = " MSNA_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MSNA_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_6:
+		case SI5351_REG_PLLA_PARAMETERS + 6:
 			s = " MSNA_P2[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLA_PARAMETERS_7:
+		case SI5351_REG_PLLA_PARAMETERS + 7:
 			s = " MSNA_P2[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
 
-		case SI5351_REG_PLLB_PARAMETERS_0:
+		case SI5351_REG_PLLB_PARAMETERS + 0:
 			s = " MSNB_P3[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_1:
+		case SI5351_REG_PLLB_PARAMETERS + 1:
 			s = " MSNB_P3[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_2:
+		case SI5351_REG_PLLB_PARAMETERS + 2:
 			s  = " Reserved-" + QString::number((value >> 2) & 0x03);
 			s += "  MSNB_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_3:
+		case SI5351_REG_PLLB_PARAMETERS + 3:
 			s = " MSNB_P1[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_4:
+		case SI5351_REG_PLLB_PARAMETERS + 4:
 			s = " MSNB_P1[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_5:
+		case SI5351_REG_PLLB_PARAMETERS + 5:
 			s  = " MSNB_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MSNB_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_6:
+		case SI5351_REG_PLLB_PARAMETERS + 6:
 			s = " MSNB_P2[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_PLLB_PARAMETERS_7:
+		case SI5351_REG_PLLB_PARAMETERS + 7:
 			s = " MSNB_P2[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
 
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_1:
+		case SI5351_REG_MS0_PARAMETERS + 0:
 			s = " MS0_P3[15:8] " + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_2:
+		case SI5351_REG_MS0_PARAMETERS + 1:
 			s = " MS0_P3[ 7:0] " + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_3:
+		case SI5351_REG_MS0_PARAMETERS + 2:
 			s = " R0_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS0_DIVBY4-";
@@ -1751,30 +1658,30 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS0_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_4:
+		case SI5351_REG_MS0_PARAMETERS + 3:
 			s = " MS0_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_5:
+		case SI5351_REG_MS0_PARAMETERS + 4:
 			s = " MS0_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_6:
+		case SI5351_REG_MS0_PARAMETERS + 5:
 			s  = " MS0_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MS0_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_7:
+		case SI5351_REG_MS0_PARAMETERS + 6:
 			s = " MS0_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH0_PARAMETERS_8:
+		case SI5351_REG_MS0_PARAMETERS + 7:
 			s = " MS0_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_1:
+		case SI5351_REG_MS1_PARAMETERS + 0:
 			s = " MS1_P3[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_2:
+		case SI5351_REG_MS1_PARAMETERS + 1:
 			s = " MS1_P3[ 7:0]-" + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_3:
+		case SI5351_REG_MS1_PARAMETERS + 2:
 			s = " R1_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS1_DIVBY4-";
@@ -1788,30 +1695,30 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS1_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_4:
+		case SI5351_REG_MS1_PARAMETERS + 3:
 			s = " MS1_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_5:
+		case SI5351_REG_MS1_PARAMETERS + 4:
 			s = " MS1_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_6:
+		case SI5351_REG_MS1_PARAMETERS + 5:
 			s  = " MS1_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MS1_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_7:
+		case SI5351_REG_MS1_PARAMETERS + 6:
 			s = " MS1_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH1_PARAMETERS_8:
+		case SI5351_REG_MS1_PARAMETERS + 7:
 			s = " MS1_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_1:
+		case SI5351_REG_MS2_PARAMETERS + 0:
 			s = " MS2_P3[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_2:
+		case SI5351_REG_MS2_PARAMETERS + 1:
 			s = " MS2_P3[ 7:0]-" + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_3:
+		case SI5351_REG_MS2_PARAMETERS + 2:
 			s = " R2_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS2_DIVBY4-";
@@ -1825,30 +1732,30 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS2_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_4:
+		case SI5351_REG_MS2_PARAMETERS + 3:
 			s = " MS2_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_5:
+		case SI5351_REG_MS2_PARAMETERS + 4:
 			s = " MS2_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_6:
+		case SI5351_REG_MS2_PARAMETERS + 5:
 			s  = " MS2_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MS2_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_7:
+		case SI5351_REG_MS2_PARAMETERS + 6:
 			s = " MS2_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH2_PARAMETERS_8:
+		case SI5351_REG_MS2_PARAMETERS + 7:
 			s = " MS2_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_1:
+		case SI5351_REG_MS3_PARAMETERS + 0:
 			s = " MS3_P3[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_2:
+		case SI5351_REG_MS3_PARAMETERS + 1:
 			s = " MS3_P3[ 7:0]-" + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_3:
+		case SI5351_REG_MS3_PARAMETERS + 2:
 			s = " R3_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS3_DIVBY4-";
@@ -1862,30 +1769,30 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS3_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_4:
+		case SI5351_REG_MS3_PARAMETERS + 3:
 			s = " MS3_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_5:
+		case SI5351_REG_MS3_PARAMETERS + 4:
 			s = " MS3_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_6:
+		case SI5351_REG_MS3_PARAMETERS + 5:
 			s  = " MS3_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MS3_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_7:
+		case SI5351_REG_MS3_PARAMETERS + 6:
 			s = " MS3_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH3_PARAMETERS_8:
+		case SI5351_REG_MS3_PARAMETERS + 7:
 			s = " MS3_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_1:
+		case SI5351_REG_MS4_PARAMETERS + 0:
 			s = " MS4_P3[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_2:
+		case SI5351_REG_MS4_PARAMETERS + 1:
 			s = " MS4_P3[ 7:0]-" + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_3:
+		case SI5351_REG_MS4_PARAMETERS + 2:
 			s = " R4_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS4_DIVBY4-";
@@ -1899,30 +1806,30 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS4_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_4:
+		case SI5351_REG_MS4_PARAMETERS + 3:
 			s = " MS4_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_5:
+		case SI5351_REG_MS4_PARAMETERS + 4:
 			s = " MS4_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_6:
+		case SI5351_REG_MS4_PARAMETERS + 5:
 			s  = " MS4_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += "  MS4_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_7:
+		case SI5351_REG_MS4_PARAMETERS + 6:
 			s = " MS4_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH4_PARAMETERS_8:
+		case SI5351_REG_MS4_PARAMETERS + 7:
 			s = " MS4_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_1:
+		case SI5351_REG_MS5_PARAMETERS + 0:
 			s = " MS5_P3[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_2:
+		case SI5351_REG_MS5_PARAMETERS + 1:
 			s = " MS5_P3[ 7:0]-" + QString::number((uint32_t)value << 0);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_3:
+		case SI5351_REG_MS5_PARAMETERS + 2:
 			s = " R5_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 
 			s += "  MS5_DIVBY4-";
@@ -1936,89 +1843,89 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 
 			s += "  MS5_P1[17:16]-" + QString::number((uint32_t)(value & 0x03) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_4:
+		case SI5351_REG_MS5_PARAMETERS + 3:
 			s = " MS5_P1[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_5:
+		case SI5351_REG_MS5_PARAMETERS + 4:
 			s = " MS5_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_6:
+		case SI5351_REG_MS5_PARAMETERS + 5:
 			s  = " MS5_P3[19:16]-" + QString::number((uint32_t)((value >> 4) & 0x0f) << 16);
 			s += " MS5_P2[19:16]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 16);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_7:
+		case SI5351_REG_MS5_PARAMETERS + 6:
 			s = " MS5_P2[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_MULTISYNTH5_PARAMETERS_8:
+		case SI5351_REG_MS5_PARAMETERS + 7:
 			s = " MS5_P2[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH6_PARAMETERS:
+		case SI5351_REG_MS6_PARAMETERS:
 			s = " MS6_P1[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_MULTISYNTH7_PARAMETERS:
+		case SI5351_REG_MS7_PARAMETERS:
 			s = " MS7_P1[ 7:0]-" + QString::number(value);
 			break;
 
-		case SI5351_REG_CLOCK_6_7_OUTPUT_DIVIDER:
+		case SI5351_REG_MS67_OUTPUT_DIVIDER:
 			s  = (value & 0x80) ? " RESERVED"   : " reserved";
 			s += "  R7_DIV[2:0]-" + QString::number(1u << ((value >> 4) & 0x07));
 			s += (value & 0x08) ? "  RESERVED"   : "  reserved";
 			s += "  R6_DIV[2:0]-" + QString::number(1u << ((value >> 0) & 0x07));
 			break;
 
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_0:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 0:
 			s  = (value & 0x80) ? " SSC_EN"   : " ssc_en";
 			s += "  SSDN_P2[14:8]-" + QString::number((uint32_t)(value & 0x7f) << 8);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_1:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 1:
 			s = " SSDN_P2[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_2:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 2:
 			s  = (value & 0x80) ? " SSC_MODE-CENTER"   : " ssc_mode-DOWN";
 			s += "  SSDN_P3[14:8]-" + QString::number((uint32_t)(value & 0x7f) << 8);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_3:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 3:
 			s = " SSDN_P3[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_4:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 4:
 			s = " SSDN_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_5:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 5:
 			s  =  " SSUDP[11:8]-"   + QString::number((uint32_t)((value >> 4) & 0x0f) << 8);
 			s += "  SSDN_P1[11:8]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 8);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_6:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 6:
 			s  = " SSUDP[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_7:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 7:
 			s  = " SSUP_P2[14:8]-" + QString::number((uint32_t)(value & 0x7f) << 8);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_8:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 8:
 			s  = " SSUP_P2[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_9:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 9:
 			s  = " SSUP_P3[14:8]-" + QString::number((uint32_t)(value & 0x7f) << 8);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_10:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 10:
 			s  = " SSUP_P3[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_11:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 11:
 			s  = " SSUP_P1[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS_12:
+		case SI5351_REG_SPREAD_SPECTRUM_PARAMETERS + 12:
 			s  =  " SS_NCLK[ 3:0]-" + QString::number((uint32_t)((value >> 4) & 0x0f));
 			s += "  SSUP_P1[11:8]-" + QString::number((uint32_t)((value >> 0) & 0x0f) << 8);
 			break;
 
-		case SI5351_REG_VCXO_PARAMTER_0:
+		case SI5351_REG_VCXO_PARAMTERS + 0:
 			s  = " VCXO_Param[ 7:0]-" + QString::number(value);
 			break;
-		case SI5351_REG_VCXO_PARAMTER_1:
+		case SI5351_REG_VCXO_PARAMTERS + 1:
 			s  = " VCXO_Param[15:8]-" + QString::number((uint32_t)value << 8);
 			break;
-		case SI5351_REG_VCXO_PARAMTER_2:
+		case SI5351_REG_VCXO_PARAMTERS + 2:
 			s  = (value & 0x80) ? " RESERVED"   : " reserved";
 			s += (value & 0x40) ? " RESERVED"   : " reserved";
 			s += "  VCXO_Param[21:16]-" + QString::number((uint32_t)(value & 0x3f) << 16);
@@ -2070,7 +1977,7 @@ QString __fastcall MainWindow::regSettingDescription(const int addr, const uint8
 			}
 			s += "  RESERVED-" + QString("%1").arg(value & 0x3f, 6, 2, QChar('0'));
 			break;
-		case SI5351_REG_FANOUT:
+		case SI5351_REG_FANOUT_ENABLE:
 			s  = (value & 0x80) ? " CLKIN_FANOUT_EN" : " clkin_fanout_en";
 			s += (value & 0x40) ? "  XO_FANOUT_EN"   : "  xo_fanout_en";
 			s += (value & 0x20) ? "  RESERVED"       : "  reserved";
@@ -2136,12 +2043,12 @@ void __fastcall MainWindow::updateFrequencies()
 	const int      pll_ref_div          = 1u << ((m_si5351_reg_values[SI5351_REG_PLL_INPUT_SOURCE] >> 6) & 0x03);
 	const double   pll_ref_Hz           = m_xtal_Hz;
 
-	reg     = &m_si5351_reg_values[SI5351_REG_PLLA_PARAMETERS_0];
+	reg     = &m_si5351_reg_values[SI5351_REG_PLLA_PARAMETERS];
 	plla_p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	plla_p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
 	plla_p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
 
-	reg     = &m_si5351_reg_values[SI5351_REG_PLLB_PARAMETERS_0];
+	reg     = &m_si5351_reg_values[SI5351_REG_PLLB_PARAMETERS];
 	pllb_p1 = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	pllb_p2 = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
 	pllb_p3 = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
@@ -2156,7 +2063,7 @@ void __fastcall MainWindow::updateFrequencies()
 	const bool     clk0_inv             = (m_si5351_reg_values[SI5351_REG_CLK0_CONTROL] & 0x10) ? true : false;
 	const bool     clk0_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x01) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x01) ? false : true;
 
-	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH0_PARAMETERS_1];
+	reg          = &m_si5351_reg_values[SI5351_REG_MS0_PARAMETERS];
 	ms0_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	ms0_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
 	ms0_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
@@ -2173,7 +2080,7 @@ void __fastcall MainWindow::updateFrequencies()
 	const bool     clk1_inv             = (m_si5351_reg_values[SI5351_REG_CLK1_CONTROL] & 0x10) ? true : false;
 	const bool     clk1_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x02) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x02) ? false : true;
 
-	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH1_PARAMETERS_1];
+	reg          = &m_si5351_reg_values[SI5351_REG_MS1_PARAMETERS];
 	ms1_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	ms1_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
 	ms1_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
@@ -2190,7 +2097,7 @@ void __fastcall MainWindow::updateFrequencies()
 	const bool     clk2_inv             = (m_si5351_reg_values[SI5351_REG_CLK2_CONTROL] & 0x10) ? true : false;
 	const bool     clk2_enabled         = (m_si5351_reg_values[SI5351_REG_OEB_PIN_ENABLE_CONTROL] & 0x04) ? true : (m_si5351_reg_values[SI5351_REG_OUTPUT_ENABLE_CONTROL] & 0x04) ? false : true;
 
-	reg          = &m_si5351_reg_values[SI5351_REG_MULTISYNTH2_PARAMETERS_1];
+	reg          = &m_si5351_reg_values[SI5351_REG_MS2_PARAMETERS];
 	ms2_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	ms2_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
 	ms2_p3       = ((uint32_t)(reg[5] & 0xf0) << 12) | ((uint32_t)reg[0] << 8) | ((uint32_t)reg[1] << 0);
@@ -2394,7 +2301,7 @@ void __fastcall MainWindow::updateFrequencies()
 
 	s = "";
 
-	reg      = &m_si5351_reg_values[SI5351_REG_MULTISYNTH1_PARAMETERS_1];
+	reg          = &m_si5351_reg_values[SI5351_REG_MS1_PARAMETERS];
 
 	ms1_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	ms1_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);
@@ -2487,7 +2394,7 @@ void __fastcall MainWindow::updateFrequencies()
 
 	s = "";
 
-	reg = &m_si5351_reg_values[SI5351_REG_MULTISYNTH2_PARAMETERS_1];
+	reg = &m_si5351_reg_values[SI5351_REG_MS2_PARAMETERS];
 
 	ms2_p1       = ((uint32_t)(reg[2] & 0x03) << 16) | ((uint32_t)reg[3] << 8) | ((uint32_t)reg[4] << 0);
 	ms2_p2       = ((uint32_t)(reg[5] & 0x0f) << 16) | ((uint32_t)reg[6] << 8) | ((uint32_t)reg[7] << 0);

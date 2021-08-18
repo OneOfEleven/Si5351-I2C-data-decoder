@@ -304,7 +304,6 @@ object Form1: TForm1
     Height = 25
     Caption = 'Test'
     TabOrder = 4
-    Visible = False
     OnClick = TestButtonClick
   end
   object OpenDialog1: TOpenDialog
